@@ -1,0 +1,102 @@
+import type { Locale, UiStrings } from '@/site.config'
+import { siteConfig } from '@/site.config'
+
+/**
+ * UI copy. Written in both languages at once so a missing translation is a
+ * type error rather than an English string leaking into a Chinese page.
+ */
+const strings: Record<Locale, UiStrings> = {
+  zh: {
+    skip: '跳到正文',
+    home: '首页',
+    navMenu: '菜单',
+    close: '关闭',
+    switchLanguage: '切换语言',
+    themeToggle: '切换深浅色',
+    allPosts: '全部文章',
+    categories: '分类',
+    tags: '标签',
+    category: '分类',
+    readMinutes: (minutes) => `${minutes} 分钟`,
+    updated: (date) => `更新于 ${date}`,
+    toc: '目录',
+    breadcrumb: '面包屑导航',
+    postNavigation: '文章导航',
+    colophon: '附记',
+    licenseText: '本文采用',
+    source: '源文件',
+    previous: '上一篇',
+    next: '下一篇',
+    backToTop: '回到顶部',
+    empty: '这里还没有内容。',
+    notFoundTitle: '页面不存在',
+    notFoundText: '这个地址下没有内容，也许它已经被移动或者从未存在。',
+    notFoundAction: '回到首页',
+    searchLabel: '搜索文章',
+    searchPlaceholder: '按标题、摘要或标签查找…',
+    searchFoundOne: '找到 1 篇文章',
+    searchFoundMany: '找到 {count} 篇文章',
+    searchNone: '没有匹配的文章。',
+    searchClear: '清除搜索',
+    searchHint: '输入关键词开始搜索。',
+    postsCount: (count) => `${count} 篇文章`,
+    tagsCount: (count) => `${count} 个标签`,
+    postsLabel: '篇文章',
+    latestPosts: '最新文章',
+    categoriesLabel: '个分类',
+    tagsLabel: '个标签',
+    copyCode: '复制',
+    copied: '已复制',
+  },
+  en: {
+    skip: 'Skip to content',
+    home: 'Home',
+    navMenu: 'Menu',
+    close: 'Close',
+    switchLanguage: 'Switch language',
+    themeToggle: 'Toggle colour scheme',
+    allPosts: 'All posts',
+    categories: 'Categories',
+    tags: 'Tags',
+    category: 'Category',
+    readMinutes: (minutes) => `${minutes} min`,
+    updated: (date) => `Updated ${date}`,
+    toc: 'Contents',
+    breadcrumb: 'Breadcrumb',
+    postNavigation: 'Post navigation',
+    colophon: 'Colophon',
+    licenseText: 'Licensed under',
+    source: 'Source',
+    previous: 'Previous',
+    next: 'Next',
+    backToTop: 'Back to top',
+    empty: 'Nothing here yet.',
+    notFoundTitle: 'Page not found',
+    notFoundText: 'There is nothing at this address. It may have moved, or never existed.',
+    notFoundAction: 'Back home',
+    searchLabel: 'Search posts',
+    searchPlaceholder: 'Search by title, summary or tag…',
+    searchFoundOne: '1 post found',
+    searchFoundMany: '{count} posts found',
+    searchNone: 'No posts match that query.',
+    searchClear: 'Clear search',
+    searchHint: 'Type to search.',
+    postsCount: (count) => `${count} post${count === 1 ? '' : 's'}`,
+    tagsCount: (count) => `${count} tag${count === 1 ? '' : 's'}`,
+    postsLabel: 'posts',
+    latestPosts: 'Latest posts',
+    categoriesLabel: 'categories',
+    tagsLabel: 'tags',
+    copyCode: 'Copy',
+    copied: 'Copied',
+  },
+}
+
+export function ui(locale: Locale): UiStrings {
+  return strings[locale] ?? strings[siteConfig.defaultLocale]
+}
+
+export function otherLocale(locale: Locale): Locale {
+  const index = siteConfig.locales.indexOf(locale)
+  return siteConfig.locales[(index + 1) % siteConfig.locales.length]
+}

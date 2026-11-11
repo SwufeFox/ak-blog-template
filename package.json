@@ -2,6 +2,7 @@
   "name": "open-ak-blog-template",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "description": "A Next.js blog template with an editorial reading layout and the ak-ui design system.",
   "scripts": {
     "dev": "next dev",

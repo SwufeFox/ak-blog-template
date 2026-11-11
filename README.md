@@ -56,4 +56,4 @@ src/styles/globals.css    ak-ui 主题覆盖与全站样式
 设计语言来自 [YunYouJun/ak-ui](https://github.com/YunYouJun/ak-ui) 与
 [MooncellWiki/prts-design](https://github.com/MooncellWiki/prts-design)，React 实现是
 [SwufeFox/ak-ui-react](https://github.com/SwufeFox/ak-ui-react)（MIT）。
-模板本身没有附带许可证，用之前按自己的需要补一份。
+模板以 [MIT License](LICENSE) 发布。

@@ -33,9 +33,8 @@ flowchart LR
 - `src/proxy.ts` 把 `/zh/…` 308 回根路径，避免同一页有两个地址。
 
 `src/lib/urls.ts` 负责生成规范地址：默认语言不带前缀，其他语言带。canonical、hreflang、
-RSS 的链接都用它。每个主要路由（首页、文章、归档、标签、搜索）在 `generateMetadata` 里声明
-自己的 `alternates.canonical` 与 `languages`；layout 里的 canonical 只负责首页和兜底，
-新增路由时不要依赖它。
+RSS 的链接都用它。文章、归档、标签和搜索页各自在 `generateMetadata` 里声明自己的
+`alternates.canonical` 与 `languages`；首页由 layout 的 canonical 负责，新增路由时不要依赖它。
 
 ## 内容层
 

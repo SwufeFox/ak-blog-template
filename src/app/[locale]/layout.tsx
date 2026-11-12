@@ -7,11 +7,12 @@ import { AkGridBackdrop } from '@swufefox/ak-ui-react'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
 import { otherLocale, ui } from '@/lib/i18n'
+import { THEME_COLORS, THEME_STORAGE_KEY } from '@/lib/theme'
 import { homePath } from '@/lib/urls'
 import { isLocale, siteConfig } from '@/site.config'
 
-/** Runs before paint so the page never flashes the wrong colour scheme. */
-const themeScript = `(function(){var root=document.documentElement;try{var t=localStorage.getItem('ak-theme');if(t==='archive'||t==='light'){root.dataset.akTheme='archive';return}if(t==='terminal'||t==='dark'){root.dataset.akTheme='terminal';return}}catch(e){}root.dataset.akTheme='archive'})()`
+/** Runs before paint so the page never flashes the wrong colour scheme or chrome. */
+const themeScript = `(function(){var root=document.documentElement;var colors=${JSON.stringify(THEME_COLORS)};function paint(t){root.dataset.akTheme=t;var m=document.querySelector('meta[name="theme-color"]');if(!m){m=document.createElement('meta');m.name='theme-color';document.head.appendChild(m)}m.content=colors[t]||colors.archive}try{var t=localStorage.getItem('${THEME_STORAGE_KEY}');if(t==='archive'||t==='light'){paint('archive');return}if(t==='terminal'||t==='dark'){paint('terminal');return}}catch(e){}paint('archive')})()`
 
 export function generateStaticParams() {
   return siteConfig.locales.map((locale) => ({ locale }))
@@ -78,6 +79,7 @@ export default async function LocaleLayout({
       suppressHydrationWarning
     >
       <head>
+        <meta name="theme-color" content={THEME_COLORS.archive} />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>

@@ -84,6 +84,7 @@ ak-ui 2.0 提供随主题切换的语义令牌；`src/styles/globals.css` 将它
 - `<html data-ak-theme="archive|terminal">` 是唯一开关。`archive` 是浅色默认主题，`terminal` 是可选深色主题。
 - `src/app/[locale]/layout.tsx` 在绘制前读取 `localStorage['ak-theme']`；没有保存选择时始终使用 `archive`，不跟随操作系统主题。
 - 页头按钮（`src/components/theme-toggle.tsx`）切换属性并持久化选择；ak-ui 与本站令牌据此同步切换。
+- 主题色常量集中在 `src/lib/theme.ts`；绘制前的脚本和切换按钮同时更新 `<meta name="theme-color">`（`archive` `#eef0f1`，`terminal` `#111315`），移动端浏览器栏跟随主题。
 - `globals.css` 不再按 `prefers-color-scheme` 覆盖颜色，避免浏览器偏好越过站点默认值。
 
 ## 页头与页脚

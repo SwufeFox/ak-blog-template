@@ -3,9 +3,7 @@
 import { AkButton } from '@swufefox/ak-ui-react'
 import { useSyncExternalStore } from 'react'
 
-type Theme = 'archive' | 'terminal'
-
-const STORAGE_KEY = 'ak-theme'
+import { THEME_COLORS, THEME_STORAGE_KEY, type Theme } from '@/lib/theme'
 
 /** The ak-ui theme lives on <html data-ak-theme>, set before paint by an inline script. */
 function subscribe(onChange: () => void): () => void {
@@ -28,8 +26,10 @@ export function ThemeToggle({ label }: { label: string }) {
   const toggle = () => {
     const next: Theme = readTheme() === 'terminal' ? 'archive' : 'terminal'
     document.documentElement.dataset.akTheme = next
+    const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+    if (meta) meta.content = THEME_COLORS[next]
     try {
-      window.localStorage.setItem(STORAGE_KEY, next)
+      window.localStorage.setItem(THEME_STORAGE_KEY, next)
     } catch {
       /* private mode: the choice simply does not persist */
     }

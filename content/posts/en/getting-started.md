@@ -98,5 +98,6 @@ flowchart TD
 
 ## Summary
 
-Save the file, refresh the page, and it is there. When you are ready to publish, run
-`npm run build` and hand the `.next` folder to any static host.
+Save the file, refresh the page, and it is there. To publish, run `npm run build`, then
+serve it with `npm start`; the proxy, dynamic 404 and image route need a Node runtime, so
+the `.next` folder cannot be dropped on a purely static host.

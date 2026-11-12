@@ -4,7 +4,7 @@ import { AkDivider, AkHeading, AkNewsList } from '@swufefox/ak-ui-react'
 import { ui } from '@/lib/i18n'
 import { kicker } from '@/lib/kickers'
 import { getCategoryCounts, getPosts, getTags } from '@/lib/posts'
-import { tagPath } from '@/lib/urls'
+import { tagPath, tagsPath } from '@/lib/urls'
 import { siteConfig } from '@/site.config'
 import { requireLocale } from '@/lib/locale'
 
@@ -18,6 +18,12 @@ export async function generateMetadata({
   return {
     title: siteConfig.nav[resolved].tags,
     description: siteConfig.description[resolved],
+    alternates: {
+      canonical: tagsPath(resolved),
+      languages: Object.fromEntries(
+        siteConfig.locales.map((entry) => [entry, tagsPath(entry)]),
+      ),
+    },
   }
 }
 

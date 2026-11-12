@@ -5,6 +5,7 @@ import { SearchClient } from '@/components/search-client'
 import { ui } from '@/lib/i18n'
 import { kicker } from '@/lib/kickers'
 import { formatDate, getPosts } from '@/lib/posts'
+import { searchPath } from '@/lib/urls'
 import { siteConfig } from '@/site.config'
 import { requireLocale } from '@/lib/locale'
 
@@ -18,6 +19,12 @@ export async function generateMetadata({
   return {
     title: siteConfig.nav[resolved].search,
     description: siteConfig.description[resolved],
+    alternates: {
+      canonical: searchPath(resolved),
+      languages: Object.fromEntries(
+        siteConfig.locales.map((entry) => [entry, searchPath(entry)]),
+      ),
+    },
     robots: { index: false, follow: true },
   }
 }

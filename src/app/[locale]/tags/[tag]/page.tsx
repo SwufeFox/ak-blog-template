@@ -6,7 +6,7 @@ import { PostNewsList } from '@/components/post-news-list'
 import { ui } from '@/lib/i18n'
 import { kicker } from '@/lib/kickers'
 import { getCategoryCounts, getPostsByTerm, getTags, termExists } from '@/lib/posts'
-import { tagsPath } from '@/lib/urls'
+import { tagPath, tagsPath } from '@/lib/urls'
 import { siteConfig } from '@/site.config'
 import { requireLocale } from '@/lib/locale'
 
@@ -38,9 +38,17 @@ export async function generateMetadata({
   const { locale, tag } = await params
   const resolved = requireLocale(locale)
   const term = decodeSegment(tag)
+  const languages: Record<string, string> = {}
+  for (const entry of siteConfig.locales) {
+    if (await termExists(term, entry)) languages[entry] = tagPath(entry, term)
+  }
   return {
     title: `#${term}`,
     description: siteConfig.description[resolved],
+    alternates: {
+      canonical: tagPath(resolved, term),
+      languages,
+    },
   }
 }
 

@@ -1657,6 +1657,7 @@ main {
   --ak-tag-signal: var(--site-action);
   font-family: var(--site-label);
   letter-spacing: 0.04em;
+  text-transform: none;
   white-space: nowrap;
 }
 

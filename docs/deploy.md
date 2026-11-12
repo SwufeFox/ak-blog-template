@@ -88,6 +88,7 @@ curl -sI  https://blog.example.com/feed.xml    # 200, application/rss+xml
 curl -s   https://blog.example.com/sitemap.xml | head
 curl -sI  https://blog.example.com/nope        # 404
 curl -sI  https://blog.example.com/content/images/pipeline.svg   # 200
+curl -sI  https://blog.example.com/og                             # 200, image/png
 ```
 
 图片带 `Cache-Control: public, max-age=31536000, immutable`，RSS 是一小时。

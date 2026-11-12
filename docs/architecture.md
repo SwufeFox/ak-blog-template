@@ -24,6 +24,7 @@ flowchart LR
 | `/feed.xml` | `src/app/[locale]/feed.xml/route.ts` | 每个语言一份 RSS |
 | `/sitemap.xml`、`/robots.txt` | `src/app/sitemap.ts`、`src/app/robots.ts` | 自动生成 |
 | `/content/images/…` | `src/app/content/[...path]/route.ts` | 正文图片，带长缓存 |
+| `/og` | `src/app/og/route.tsx` | 1200×630 社交卡片，`ImageResponse` 生成 |
 | 其他 | `src/app/[locale]/[...rest]/page.tsx` | 一律 `notFound()` |
 
 默认语言的页面在根路径，其他语言加前缀。这个映射由两处配合完成：
@@ -35,6 +36,9 @@ flowchart LR
 `src/lib/urls.ts` 负责生成规范地址：默认语言不带前缀，其他语言带。canonical、hreflang、
 RSS 的链接都用它。文章、归档、标签和搜索页各自在 `generateMetadata` 里声明自己的
 `alternates.canonical` 与 `languages`；首页由 layout 的 canonical 负责，新增路由时不要依赖它。
+
+`src/lib/social.ts` 提供同一张 1200×630 社交卡片（`/og`），layout 与文章 metadata 都把它挂到
+`openGraph.images` 和 `twitter.images`；Twitter 使用 `summary_large_image`。
 
 ## 内容层
 

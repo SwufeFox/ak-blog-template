@@ -9,6 +9,7 @@ import { ReadingProgress } from '@/components/reading-progress'
 import { otherLocale, ui } from '@/lib/i18n'
 import { kicker } from '@/lib/kickers'
 import { renderMarkdown } from '@/lib/markdown'
+import { SOCIAL_IMAGE } from '@/lib/social'
 import {
   formatDate,
   getPost,
@@ -65,8 +66,14 @@ export async function generateMetadata({
       modifiedTime: post.updated ? toISODate(post.updated) : undefined,
       authors: [siteConfig.author],
       tags: post.tags,
+      images: [SOCIAL_IMAGE],
     },
-    twitter: { card: 'summary', title: post.title, description: post.description },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: post.description,
+      images: [SOCIAL_IMAGE],
+    },
   }
 }
 

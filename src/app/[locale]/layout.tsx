@@ -7,6 +7,7 @@ import { AkGridBackdrop } from '@swufefox/ak-ui-react'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
 import { otherLocale, ui } from '@/lib/i18n'
+import { SOCIAL_IMAGE } from '@/lib/social'
 import { THEME_COLORS, THEME_STORAGE_KEY } from '@/lib/theme'
 import { homePath } from '@/lib/urls'
 import { isLocale, siteConfig } from '@/site.config'
@@ -47,11 +48,13 @@ export async function generateMetadata({
       title: `${siteConfig.title} ${siteConfig.suffix}`,
       description: siteConfig.description[isLocale(locale) ? locale : siteConfig.defaultLocale],
       locale: isLocale(locale) ? locale : siteConfig.defaultLocale,
+      images: [SOCIAL_IMAGE],
     },
     twitter: {
-      card: 'summary',
+      card: 'summary_large_image',
       title: `${siteConfig.title} ${siteConfig.suffix}`,
       description: siteConfig.description[isLocale(locale) ? locale : siteConfig.defaultLocale],
+      images: [SOCIAL_IMAGE],
     },
     robots: { index: true, follow: true },
     icons: { icon: '/favicon.svg' },

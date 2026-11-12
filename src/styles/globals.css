@@ -337,6 +337,13 @@ main {
 .home-hero {
   margin: 30px 40px 0;
   padding-right: max(32px, 26%);
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--ak-cut-lg, 1.5rem)),
+    calc(100% - var(--ak-cut-lg, 1.5rem)) 100%,
+    0 100%
+  );
   --ak-hero-accent: var(--site-action);
 }
 

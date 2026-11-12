@@ -19,9 +19,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     })
 
-    for (const term of [...(await getTags(locale)), ...(await getCategoryCounts(locale))]) {
+    const terms = new Set([
+      ...(await getTags(locale)).map((term) => term.name),
+      ...(await getCategoryCounts(locale)).map((term) => term.name),
+    ])
+    for (const term of terms) {
       entries.push({
-        url: siteUrl(tagPath(locale, term.name)),
+        url: siteUrl(tagPath(locale, term)),
         changeFrequency: 'monthly',
         priority: 0.5,
       })

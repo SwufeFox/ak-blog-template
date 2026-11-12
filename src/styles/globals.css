@@ -686,6 +686,9 @@ main {
 }
 
 .colophon a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
   color: var(--site-info);
 }
 
@@ -1313,6 +1316,9 @@ main {
 }
 
 .ak-code__src {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
   margin-left: auto;
   color: var(--site-muted);
 }
@@ -1322,6 +1328,9 @@ main {
 }
 
 .ak-code__copy {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
   margin-left: auto;
   padding: 0;
   border: 0;

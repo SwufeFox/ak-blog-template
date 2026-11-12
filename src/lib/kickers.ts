@@ -6,7 +6,6 @@ import type { Locale } from '@/site.config'
  * would be noise.
  */
 const KICKERS = {
-  categories: 'CATEGORIES',
   latest: 'LATEST',
   archive: 'ARCHIVE',
   search: 'SEARCH',

@@ -51,6 +51,8 @@ export interface UiStrings {
   latestPosts: string
   categoriesLabel: string
   tagsLabel: string
+  typeLabel: string
+  termLabel: string
   copyCode: string
   copied: string
 }

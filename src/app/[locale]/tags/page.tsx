@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
-import { AkDivider, AkHeading, AkNewsList } from '@swufefox/ak-ui-react'
+import Link from 'next/link'
+import { AkDivider, AkHeading, AkTable } from '@swufefox/ak-ui-react'
 
 import { ui } from '@/lib/i18n'
 import { kicker } from '@/lib/kickers'
@@ -38,6 +39,25 @@ export default async function TagsPage({ params }: { params: Promise<{ locale: s
     getPosts(resolved),
   ])
 
+  const rows = [
+    ...categories.map((category) => ({
+      id: `category:${category.name}`,
+      cells: {
+        type: copy.category,
+        name: <Link href={tagPath(resolved, category.name)}>{category.name}</Link>,
+        count: category.count,
+      },
+    })),
+    ...tags.map((tag) => ({
+      id: `tag:${tag.name}`,
+      cells: {
+        type: copy.tags,
+        name: <Link href={tagPath(resolved, tag.name)}>#{tag.name}</Link>,
+        count: tag.count,
+      },
+    })),
+  ]
+
   return (
     <div className="route-page">
       <header className="route-head">
@@ -56,37 +76,18 @@ export default async function TagsPage({ params }: { params: Promise<{ locale: s
 
       <AkDivider className="route-divider" variant="accent" aria-hidden="true" />
 
-      {categories.length > 0 ? (
-        <section className="term-section">
-          <AkHeading title={copy.categories} en={kicker(resolved, 'categories')} stack level={2} />
-          <AkNewsList
-            className="term-news-list"
-            label={copy.categories}
-            items={categories.map((category) => ({
-              title: category.name,
-              time: copy.postsCount(category.count),
-              href: tagPath(resolved, category.name),
-            }))}
-            empty={copy.empty}
-          />
-        </section>
-      ) : null}
-
-      {tags.length > 0 ? (
-        <section className="term-section">
-          <AkHeading title={copy.tags} en={kicker(resolved, 'tags')} stack level={2} />
-          <AkNewsList
-            className="term-news-list"
-            label={copy.tags}
-            items={tags.map((tag) => ({
-              title: `#${tag.name}`,
-              time: copy.postsCount(tag.count),
-              href: tagPath(resolved, tag.name),
-            }))}
-            empty={copy.empty}
-          />
-        </section>
-      ) : null}
+      <AkTable
+        className="archive-table"
+        aria-label={siteConfig.nav[resolved].tags}
+        columns={[
+          { key: 'type', header: copy.typeLabel, width: '6rem' },
+          { key: 'name', header: copy.termLabel },
+          { key: 'count', header: copy.postsLabel, numeric: true, width: '7rem' },
+        ]}
+        rows={rows}
+        emptyLabel={copy.empty}
+        hoverable={false}
+      />
     </div>
   )
 }

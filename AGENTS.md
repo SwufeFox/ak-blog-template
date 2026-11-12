@@ -15,7 +15,7 @@
 - **Search**: server pages pass localized post summaries to `src/components/search-client.tsx`; filtering and ranking happen client-side (title 4, tag/category 2, summary 1). No search backend or index file.
 - **ak-ui boundary**: `@swufefox/ak-ui-react` is a client-entry package but can be imported from server components; every component is SSR'd then hydrated. There is **no `src/components/ak.ts` forwarding layer** — import primitives directly. `AkMobileMenu` is mounted only after hydration via `useSyncExternalStore` to avoid the package's module-counter ID mismatch.
 - **Theme**: `<html data-ak-theme="archive">` (light) or `terminal` (dark). An inline pre-paint script reads `localStorage['ak-theme']` and updates `<meta name="theme-color">`; storage key and browser-chrome colors live in `src/lib/theme.ts`. The CSS toggle in `theme-toggle.tsx` renders both icon/label states and switches them on the attribute. `useSyncExternalStore` keeps `aria-pressed` in sync.
-- **Client runtimes**: `site-nav.tsx` (path/current page/mobile menu), `theme-toggle.tsx`, `search-client.tsx`, `post-toc.tsx` (IntersectionObserver scrollspy), `reading-progress.tsx` and `post-runtime.tsx` (copy buttons; dynamic Mermaid/ECharts). Keep new browser behavior in similarly small client components.
+- **Client runtimes**: `site-nav.tsx` (path/current page/mobile menu), `theme-toggle.tsx`, `search-client.tsx`, `post-toc.tsx` (scroll-position scrollspy), `reading-progress.tsx` and `post-runtime.tsx` (copy buttons; dynamic Mermaid/ECharts). Keep new browser behavior in similarly small client components.
 
 ## Key Directories
 

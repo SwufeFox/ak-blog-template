@@ -47,12 +47,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       <section className="home-archive">
         {categories.length > 0 ? (
           <nav className="home-categories" aria-label={copy.categories}>
-            <AkHeading
-              title={copy.categories}
-              en={kicker(resolved, 'categories')}
-              stack
-              level={2}
-            />
+            <span className="home-categories__label">{copy.categories}</span>
             <AkTagGroup>
               {categories.map((category) => (
                 <Link key={category.name} href={tagPath(resolved, category.name)}>

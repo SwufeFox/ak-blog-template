@@ -14,32 +14,38 @@ export function PostToc({ toc, title, en }: { toc: TocEntry[]; title: string; en
     if (headings.length === 0) return
 
     const last = toc[toc.length - 1]
-    let atBottom = false
+    let frame = 0
 
-    const markBottom = () => {
-      atBottom =
-        window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4
-      if (atBottom && last) setActive(last.id)
+    const update = () => {
+      frame = 0
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) {
+        setActive(last.id)
+        return
+      }
+
+      // The current section is the last heading above the reading threshold.
+      // A plain intersection test leaves the rail blank between headings.
+      const threshold = window.innerHeight * 0.25
+      let current: string | null = null
+      for (const heading of headings) {
+        if (heading.getBoundingClientRect().top > threshold) break
+        current = heading.id
+      }
+      setActive(current)
     }
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (atBottom) return
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
-        if (visible[0]) setActive(visible[0].target.id)
-      },
-      { rootMargin: '-12% 0px -72% 0px' },
-    )
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(update)
+    }
 
-    for (const heading of headings) observer.observe(heading)
-    window.addEventListener('scroll', markBottom, { passive: true })
-    markBottom()
+    window.addEventListener('scroll', schedule, { passive: true })
+    window.addEventListener('resize', schedule)
+    update()
 
     return () => {
-      observer.disconnect()
-      window.removeEventListener('scroll', markBottom)
+      cancelAnimationFrame(frame)
+      window.removeEventListener('scroll', schedule)
+      window.removeEventListener('resize', schedule)
     }
   }, [toc])
 

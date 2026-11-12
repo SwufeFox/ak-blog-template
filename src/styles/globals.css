@@ -345,11 +345,18 @@ main {
 }
 
 .home-categories {
-  margin: 0 0 30px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  margin: 0 0 28px;
 }
 
-.home-categories > .ak-heading {
-  margin: 0 0 14px;
+.home-categories__label {
+  color: var(--site-muted);
+  font-family: var(--site-label);
+  font-size: 12px;
+  letter-spacing: 0.08em;
 }
 
 .home-categories .ak-tag-group {
@@ -555,6 +562,12 @@ main {
 
 .toc .ak-panel {
   margin: 0;
+  border: 0;
+  background: transparent;
+}
+
+.toc .ak-panel__head {
+  background: transparent;
 }
 
 .toc .ak-panel__body {

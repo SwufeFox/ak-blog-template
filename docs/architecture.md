@@ -86,9 +86,10 @@ RSS 的链接都用它。文章、归档、标签和搜索页各自在 `generate
 `src/components/reading-progress.tsx` 在文章页顶部渲染一条 3px 的 sticky 进度条，按
 `scrollY / (scrollHeight - innerHeight)` 填充。
 
-`src/components/post-toc.tsx` 是客户端组件，但 `<ol>` 仍由服务端渲染。`IntersectionObserver`
-在视口上方 12%–28% 的窄带里选出当前 `h2`/`h3`，给对应链接加 `aria-current="location"`；
-样式把它画成左侧的动作黄竖线。点击目录项会立即更新高亮，随后交还给观察器。
+`src/components/post-toc.tsx` 是客户端组件，但 `<ol>` 仍由服务端渲染。滚动时用
+`requestAnimationFrame` 取视口上方 25% 之前的最后一个 `h2`/`h3`，给对应链接加
+`aria-current="location"`；到文档底部固定最后一节。这样两节之间不会出现高亮空白。
+样式把它画成左侧的动作黄竖线。点击目录项会立即更新高亮，随后交还给滚动计算。
 
 ## 浏览器运行时
 

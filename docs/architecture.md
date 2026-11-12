@@ -117,7 +117,8 @@ RSS 的链接都用它。文章、归档、标签和搜索页各自在 `generate
 没有后端，也没有单独的索引文件：搜索页在服务端把当前语言的文章压成
 `{ slug, title, description, tags, category, date }` 交给 `SearchClient`。浏览器按每个查询词独立计分：
 标题 4 分、标签 / 分类 2 分、摘要 1 分；命中至少一个词的文章按总分排序，命中的词包进 `<mark>`。
-输入框是受控的，状态变化即时过滤，不需要提交。
+输入框是受控的，状态变化即时过滤，不需要提交。查询词同步到 `?q=`（`history.replaceState`），
+直接分享、刷新或从别的页面返回时都能恢复；清空输入会移除这个参数。
 
 文章多到十万字以上时可以把这套换成 `search.json` + 预建索引，接口在
 `src/components/search-client.tsx` 的 `items` 上。

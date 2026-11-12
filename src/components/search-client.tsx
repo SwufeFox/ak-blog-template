@@ -1,10 +1,29 @@
 'use client'
 
 import { AkNewsList, AkSearch } from '@swufefox/ak-ui-react'
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useSyncExternalStore, type ReactNode } from 'react'
 
 import { postPath } from '@/lib/urls'
 import type { Locale } from '@/site.config'
+
+const SEARCH_EVENT = 'ak-search-change'
+
+function subscribeSearch(onChange: () => void): () => void {
+  window.addEventListener('popstate', onChange)
+  window.addEventListener(SEARCH_EVENT, onChange)
+  return () => {
+    window.removeEventListener('popstate', onChange)
+    window.removeEventListener(SEARCH_EVENT, onChange)
+  }
+}
+
+function readSearch(): string {
+  return window.location.search
+}
+
+function serverSearch(): string {
+  return ''
+}
 
 export interface SearchItem {
   slug: string
@@ -62,8 +81,19 @@ export function SearchClient({
   locale: Locale
   labels: Labels
 }) {
-  const [query, setQuery] = useState('')
+  const search = useSyncExternalStore(subscribeSearch, readSearch, serverSearch)
+  const query = useMemo(() => new URLSearchParams(search).get('q') ?? '', [search])
   const words = useMemo(() => terms(query), [query])
+
+  // The URL is the source of truth: `/search?q=…` is shareable and survives a
+  // reload, and replaceState keeps the typing session out of browser history.
+  const setQuery = (next: string) => {
+    const url = new URL(window.location.href)
+    if (next) url.searchParams.set('q', next)
+    else url.searchParams.delete('q')
+    window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`)
+    window.dispatchEvent(new Event(SEARCH_EVENT))
+  }
 
   const results = useMemo(() => {
     if (words.length === 0) return []

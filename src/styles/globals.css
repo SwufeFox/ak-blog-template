@@ -748,6 +748,12 @@ main {
   margin-top: 0;
 }
 
+.prose > p:first-child {
+  color: var(--site-ink);
+  font-size: 1.125rem;
+  line-height: 1.9;
+}
+
 .prose p {
   margin: 0 0 1.25em;
 }
@@ -1603,6 +1609,18 @@ main {
 .ak-heading__title,
 .home-hero .ak-hero__title {
   text-wrap: balance;
+}
+
+.home-hero .ak-hero__title .cn {
+  display: block;
+  max-width: 44ch;
+  margin-top: 14px;
+  color: color-mix(in srgb, #fff 78%, transparent);
+  font-family: var(--site-sans);
+  font-size: clamp(1rem, 1.5vw, 1.125rem);
+  font-weight: 500;
+  line-height: 1.65;
+  letter-spacing: 0.01em;
 }
 
 .ak-site-menu [data-ak-menu-close] {

@@ -592,6 +592,8 @@ main {
 .toc a {
   position: relative;
   display: flex;
+  align-items: center;
+  min-height: 24px;
   gap: 9px;
   overflow-wrap: anywhere;
 }
@@ -1528,6 +1530,9 @@ main {
 }
 
 .search-status__clear {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
   margin-left: 10px;
   padding: 0;
   border: 0;
@@ -1583,8 +1588,14 @@ main {
 .site-footer nav {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   gap: 4px 12px;
+}
+
+.site-footer nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
 }
 
 .site-footer nav a + a::before {
@@ -1615,7 +1626,7 @@ main {
   display: block;
   max-width: 44ch;
   margin-top: 14px;
-  color: color-mix(in srgb, #fff 78%, transparent);
+  color: color-mix(in srgb, var(--ak-hero-fg, #fff) 78%, transparent);
   font-family: var(--site-sans);
   font-size: clamp(1rem, 1.5vw, 1.125rem);
   font-weight: 500;

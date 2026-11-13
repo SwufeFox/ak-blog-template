@@ -48,7 +48,9 @@ export interface UiStrings {
   postsCount: (count: number) => string
   tagsCount: (count: number) => string
   postsLabel: string
-  latestPosts: string
+  moreEntries: string
+  latestEntry: string
+  readArticle: string
   categoriesLabel: string
   tagsLabel: string
   typeLabel: string

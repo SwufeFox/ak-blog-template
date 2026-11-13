@@ -16,7 +16,7 @@ flowchart LR
 
 | 地址 | 文件 | 说明 |
 | --- | --- | --- |
-| `/`、`/en` | `src/app/[locale]/page.tsx` | 首页：简介、分类、文章列表 |
+| `/`、`/en` | `src/app/[locale]/page.tsx` | 首页：站点封面、最新文章、分类与其余文章 |
 | `/posts/<slug>` | `src/app/[locale]/posts/[slug]/page.tsx` | 文章页：目录、正文、附记、上一篇 / 下一篇 |
 | `/tags` | `src/app/[locale]/tags/page.tsx` | 分类与标签总览 |
 | `/tags/<term>` | `src/app/[locale]/tags/[tag]/page.tsx` | 某个分类或标签下的文章 |
@@ -111,6 +111,11 @@ RSS 的链接都用它。文章、归档、标签和搜索页各自在 `generate
 `@swufefox/ak-ui-react` 2.0 的入口带有 `"use client"`。Next.js 服务端组件可以直接导入和组合这些组件；它们仍会生成首屏 HTML，再由浏览器 hydration。样式表只需在 `src/app/[locale]/layout.tsx` 导入一次，不再需要 `src/components/ak.ts` 转发层。
 
 `AkMobileMenu` 的实例 ID 仍由模块级计数器生成。`src/components/site-nav.tsx` 用 `useSyncExternalStore` 将它延迟到 hydration 后挂载，避免服务端与浏览器的计数不同导致 ID 不匹配。
+
+`src/ui/` 提供包 `@swufefox/ak-blog` 的框架无关 React 组件。`BlogHero` 组合 `AkHero`，`PostList` 组合 `AkNewsList`，`FeaturedPost` 使用语义化文章和链接。站内 `PostNewsList` 负责将文章模型转成已格式化的 props，搜索直接传入高亮内容；公开组件不依赖 `siteConfig`、文件系统或 Next.js。
+
+`npm pack` 的 `prepack` 编译 ESM 与类型声明，并从当前源文件生成完整模板快照。CLI 从快照复制独立项目；组件与模板共用源代码，构建产物不进入源码库。详见[包使用与发布](package.md)。
+
 
 ## 搜索
 

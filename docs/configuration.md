@@ -55,7 +55,7 @@ NEXT_PUBLIC_SITE_URL=https://blog.example.com npm run build
 - 导航与通用：`home`、`navMenu`、`close`、`switchLanguage`、`skip`、`themeToggle`
 - 文章页：`allPosts`、`readMinutes`、`updated`、`toc`、`colophon`、`licenseText`、`source`、
   `previous`、`next`、`backToTop`、`copyCode`、`copied`
-- 列表与归档：`latestPosts`、`postsCount`、`tagsCount`、`postsLabel`、`categoriesLabel`、`tagsLabel`、`typeLabel`、`termLabel`、`empty`
+- 首页、列表与归档：`latestEntry`、`readArticle`、`moreEntries`、`postsCount`、`tagsCount`、`postsLabel`、`categoriesLabel`、`tagsLabel`、`typeLabel`、`termLabel`、`empty`
 - 搜索：`searchLabel`、`searchPlaceholder`、`searchFoundOne`、`searchFoundMany`、`searchNone`、`searchClear`、`searchHint`
 - 404：`notFoundTitle`、`notFoundText`、`notFoundAction`
 

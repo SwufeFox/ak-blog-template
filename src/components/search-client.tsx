@@ -1,10 +1,11 @@
 'use client'
 
-import { AkNewsList, AkSearch } from '@swufefox/ak-ui-react'
+import { AkSearch } from '@swufefox/ak-ui-react'
 import { useMemo, useSyncExternalStore, type ReactNode } from 'react'
 
 import { postPath } from '@/lib/urls'
 import type { Locale } from '@/site.config'
+import { PostList } from '@/ui/post-list'
 
 const SEARCH_EVENT = 'ak-search-change'
 
@@ -106,14 +107,10 @@ export function SearchClient({
 
   const resultItems = results.map((item) => ({
     category: item.category ?? item.tags[0],
-    title: (
-      <>
-        <span className="post-news-list__title">{highlight(item.title, words)}</span>
-        <span className="post-news-list__summary">{highlight(item.description, words)}</span>
-      </>
-    ),
-    time: item.time,
-    dateTime: item.date,
+    title: highlight(item.title, words),
+    description: highlight(item.description, words),
+    dateLabel: item.time,
+    date: item.date,
     href: postPath(locale, item.slug),
   }))
 
@@ -142,8 +139,8 @@ export function SearchClient({
         ) : null}
       </p>
       {results.length > 0 ? (
-        <AkNewsList
-          className="post-news-list search-results"
+        <PostList
+          className="search-results"
           items={resultItems}
           label={labels.label}
           empty={labels.none}

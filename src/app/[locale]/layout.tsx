@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import '@swufefox/ak-ui-react/style.css'
 import 'katex/dist/katex.min.css'
+import '@/styles/components.css'
 import '@/styles/globals.css'
 
 import { AkGridBackdrop } from '@swufefox/ak-ui-react'

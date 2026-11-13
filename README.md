@@ -177,7 +177,45 @@ npm exec --package=./swufefox-ak-blog-1.0.0.tgz -- ak-blog ../my-blog
 npm install /path/to/swufefox-ak-blog-1.0.0.tgz
 ```
 
-打包不会发布到 npm。维护者完成验证后可运行 `npm publish ./swufefox-ak-blog-1.0.0.tgz --access public`。发布流程与产物边界见[包使用与发布](docs/package.md)。
+打包不会发布到 npm。GitHub 仓库存在也不代表 npm 包已经创建；第一次成功的 `npm publish` 会创建 `@swufefox/ak-blog`。
+
+## 首次发布与自动发布
+
+首次发布需要一个有 `@swufefox` scope 发布权限的 npm 账号。在本仓库执行：
+
+```sh
+npm login --registry=https://registry.npmjs.org
+npm pack
+npm publish ./swufefox-ak-blog-1.0.0.tgz --access public
+```
+
+登录、2FA 与账号选择在本机完成。发布目标由 `publishConfig.registry` 固定为 npm 官方 registry，不受本机安装镜像设置影响。
+
+首次发布成功后，在 npm 的 `@swufefox/ak-blog` 包设置中添加 **GitHub Actions Trusted Publisher**：
+
+| 设置 | 值 |
+| --- | --- |
+| Organization or user | `SwufeFox` |
+| Repository | `ak-blog` |
+| Workflow filename | `publish.yml` |
+| Environment name | `npm-publish` |
+| Allowed actions | 启用直接发布 `npm publish` |
+
+GitHub 仓库中使用同名 `npm-publish` environment。后续 workflow 通过 OIDC 发布，无需保存长期 `NPM_TOKEN`。
+
+| Workflow | 触发方式 | 行为 |
+| --- | --- | --- |
+| [CI](https://github.com/SwufeFox/ak-blog/blob/main/.github/workflows/ci.yml) | `main` push、PR、手动运行 | lint、博客构建、类型检查、打包并上传 `.tgz` |
+| [Publish](https://github.com/SwufeFox/ak-blog/blob/main/.github/workflows/publish.yml) | `v*` tag、手动运行 | 同样检查并打包，校验 tag 与包版本一致，然后发布 |
+
+手动运行 **Publish** 默认勾选 `dry_run`，只检查、打包和上传产物；取消勾选才会发布。正式发布后续版本时：
+
+```sh
+npm version patch
+git push origin main --follow-tags
+```
+
+例如首次手动发布 `1.0.0` 后，下一次 patch 会生成 `v1.0.1`。不要再推送 `v1.0.0` 触发同一版本发布，npm 不允许覆盖已经发布的版本。配置与故障排查见[包使用与发布](docs/package.md)。
 
 ## 目录
 

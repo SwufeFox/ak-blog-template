@@ -4,11 +4,20 @@
   "type": "module",
   "license": "MIT",
   "description": "A Next.js blog template with an editorial reading layout and the ak-ui design system.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SwufeFox/ak-blog.git"
+  },
+  "homepage": "https://github.com/SwufeFox/ak-blog#readme",
+  "bugs": {
+    "url": "https://github.com/SwufeFox/ak-blog/issues"
+  },
   "engines": {
     "node": ">=20.9.0"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
   },
   "main": "./dist/ui/index.js",
   "types": "./dist/ui/index.d.ts",

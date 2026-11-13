@@ -113,12 +113,49 @@ In a TypeScript React consumer, the import example above exercises declaration r
 
 ## Publish workflow
 
-Before a release, update the package version and lockfile, review the application content that will enter the snapshot, and complete the application and outside-repository consumer checks. Inspect the packed file list with `npm pack --dry-run`, then create and test the real tarball with `npm pack`. The manifest restricts publication to compiled UI, CSS, the generated template, CLI, guides, README and license; no repository URL or author is fabricated.
+The release convention follows [ak-ui-react's publish workflow](https://github.com/SwufeFox/ak-ui-react/blob/master/.github/workflows/publish.yml): `v*` tags, manual dry runs, the `npm-publish` environment, Node 22.14.0, npm 11.5.1 or newer, and OIDC authentication. The package's repository metadata points to `https://github.com/SwufeFox/ak-blog.git`.
 
-Only an authorized release maintainer should run the final registry operation:
+### First publication
+
+A GitHub repository and an npm package are separate resources. An npm package is created by its first successful publication; it does not need an empty package to be created on the website first. If `@swufefox/ak-blog` does not yet exist, an owner with permission to publish under `@swufefox` must publish the first version interactively:
 
 ```sh
+npm login --registry=https://registry.npmjs.org
+npm pack
 npm publish ./swufefox-ak-blog-1.0.0.tgz --access public
 ```
 
-The package also sets `publishConfig.access` to `public` for its scoped name. The documented publish command is a manual release step; local packaging and generator commands never publish to a registry.
+Complete browser login and any 2FA prompt locally. `publishConfig.registry` fixes publication to the official npm registry even when dependency installation uses a mirror. The manifest also sets public access for the scoped package.
+
+After the package exists, open its npm settings and add a GitHub Actions Trusted Publisher with these exact values:
+
+| Field | Value |
+| --- | --- |
+| Organization or user | `SwufeFox` |
+| Repository | `ak-blog` |
+| Workflow filename | `publish.yml` |
+| Environment name | `npm-publish` |
+| Allowed actions | Enable direct `npm publish` |
+
+Use a matching `npm-publish` environment in the GitHub repository. New npm trusted-publisher configurations can be stage-only by default; the direct-publish permission must be enabled for this workflow. The workflow has `id-token: write` and uses a GitHub-hosted runner. It needs no long-lived `NPM_TOKEN`. npm generates provenance for trusted publications from this public repository. See [npm's trusted publishing requirements](https://docs.npmjs.com/trusted-publishers/).
+
+### Repository workflows
+
+`CI` runs on pushes to `main`, pull requests, and manual dispatch. It installs the lockfile, runs ESLint, builds the full Next.js blog (including content validation), checks TypeScript, and runs `npm pack`. The actual `.tgz` is uploaded as an artifact.
+
+`Publish` runs on `v*` tags and manual dispatch. It uses the same application checks and package build. For tags, the version after `v` must equal `package.json.version`; a mismatch stops before installing or publishing. It uploads the actual tarball, then publishes those same bytes. Release dependency caching is not enabled. A manual run defaults to `dry_run: true`, which skips npm publication; tag pushes publish after checks pass.
+
+Before a release, review the content that enters the generated template and update the version and lockfile together. From a clean working tree:
+
+```sh
+npm version patch
+git push origin main --follow-tags
+```
+
+After a manual first publication of `1.0.0`, this creates `v1.0.1`. Do not push `v1.0.0` to republish the bootstrap version: npm versions cannot be overwritten. `npm version minor` or `npm version major` uses the same workflow for larger releases.
+
+### Trying the release path without publishing
+
+In GitHub Actions, select **Publish**, choose **Run workflow**, and leave **dry_run** checked. Download the `ak-blog-<commit>` artifact to inspect or install the generated package. This exercises installation, checks, build, and packaging without requiring an npm publication. Environment protection rules still apply to that job.
+
+`ENEEDAUTH` during a real release usually means the trusted publisher is missing or its owner, repository, workflow filename, environment, or allowed action does not match. A first package publication must be completed before configuring its package-level trusted publisher. Local packaging and generator commands never publish to a registry.

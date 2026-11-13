@@ -1,6 +1,6 @@
 'use client'
 
-import { AkPanel } from '@swufefox/ak-ui-react'
+import { AkHeading } from '@swufefox/ak-ui-react'
 import { useEffect, useState } from 'react'
 import type { TocEntry } from '@/lib/markdown'
 
@@ -53,21 +53,20 @@ export function PostToc({ toc, title, en }: { toc: TocEntry[]; title: string; en
 
   return (
     <nav className="toc" aria-label={title}>
-      <AkPanel className="toc-panel" title={title} en={en} titleTag="h2">
-        <ol>
-          {toc.map((entry) => (
-            <li key={entry.id} className={`level-${entry.level}`}>
-              <a
-                href={`#${entry.id}`}
-                aria-current={active === entry.id ? 'location' : undefined}
-                onClick={() => setActive(entry.id)}
-              >
-                {entry.title}
-              </a>
-            </li>
-          ))}
-        </ol>
-      </AkPanel>
+      <AkHeading className="toc-heading" title={title} en={en} level={2} />
+      <ol>
+        {toc.map((entry) => (
+          <li key={entry.id} className={`level-${entry.level}`}>
+            <a
+              href={`#${entry.id}`}
+              aria-current={active === entry.id ? 'location' : undefined}
+              onClick={() => setActive(entry.id)}
+            >
+              {entry.title}
+            </a>
+          </li>
+        ))}
+      </ol>
     </nav>
   )
 }

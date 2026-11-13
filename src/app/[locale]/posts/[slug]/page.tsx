@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { AkBackTop, AkBreadcrumb, AkCollapseItem, AkDivider, AkHeading, AkNotice, AkTag, AkTagGroup } from '@swufefox/ak-ui-react'
+import { AkBackTop, AkBreadcrumb, AkCollapsible, AkDivider, AkHeading, AkNotice, AkTag, AkTagGroup } from '@swufefox/ak-ui-react'
 
 import { PostRuntime } from '@/components/post-runtime'
 import { PostToc } from '@/components/post-toc'
@@ -129,34 +129,53 @@ export default async function PostPage({
                   : []),
               ]}
             />
-            <span className="article-header__facts">
-              <time dateTime={post.date}>{formatDate(post.date, resolved)}</time>
-              <span>{copy.readMinutes(readingMinutes(post.body))}</span>
-              {post.updated ? <span>{copy.updated(formatDate(post.updated, resolved))}</span> : null}
-              {translation ? (
-                <Link href={postPath(target, post.slug)} hrefLang={target} lang={target}>
-                  {siteConfig.localeNames[target]}
-                </Link>
-              ) : null}
-            </span>
           </div>
-          <AkHeading className="article-header__heading" title={post.title} level={1} size="lg" />
-          <p className="article-header__dek">{post.description}</p>
-          {post.tags.length > 0 ? (
-            <AkTagGroup className="article-header__tags">
-              {post.tags.map((tag) => (
-                <Link key={tag} href={tagPath(resolved, tag)}>
-                  <AkTag size="sm" variant="neutral">#{tag}</AkTag>
-                </Link>
-              ))}
-            </AkTagGroup>
-          ) : null}
+          <div className="article-header__grid">
+            <div className="article-header__lead">
+              <AkHeading className="article-header__heading" title={post.title} level={1} size="lg" />
+              <p className="article-header__dek">{post.description}</p>
+              {post.tags.length > 0 ? (
+                <AkTagGroup className="article-header__tags">
+                  {post.tags.map((tag) => (
+                    <Link key={tag} href={tagPath(resolved, tag)}>
+                      <AkTag size="sm" variant="neutral">#{tag}</AkTag>
+                    </Link>
+                  ))}
+                </AkTagGroup>
+              ) : null}
+            </div>
+            <dl className="article-header__facts">
+              <div>
+                <dt>{copy.published}</dt>
+                <dd>
+                  <time dateTime={post.date}>{formatDate(post.date, resolved)}</time>
+                  {post.updated ? (
+                    <span className="article-header__updated">{copy.updated(formatDate(post.updated, resolved))}</span>
+                  ) : null}
+                </dd>
+              </div>
+              <div>
+                <dt>{copy.readingTime}</dt>
+                <dd>{copy.readMinutes(readingMinutes(post.body))}</dd>
+              </div>
+              {translation ? (
+                <div>
+                  <dt>{copy.switchLanguage}</dt>
+                  <dd>
+                    <Link href={postPath(target, post.slug)} hrefLang={target} lang={target}>
+                      {siteConfig.localeNames[target]}
+                    </Link>
+                  </dd>
+                </div>
+              ) : null}
+            </dl>
+          </div>
         </header>
 
         <AkDivider className="article-divider" variant="accent" aria-hidden="true" />
 
         {toc.length > 0 ? (
-          <AkCollapseItem className="toc-mobile" title={copy.toc}>
+          <AkCollapsible className="toc-mobile" title={copy.toc}>
             <nav aria-label={copy.toc}>
               <ol>
                 {toc.map((entry) => (
@@ -166,7 +185,7 @@ export default async function PostPage({
                 ))}
               </ol>
             </nav>
-          </AkCollapseItem>
+          </AkCollapsible>
         ) : null}
 
         <div className="article-body">

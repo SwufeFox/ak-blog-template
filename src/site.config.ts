@@ -23,6 +23,8 @@ export interface UiStrings {
   categories: string
   tags: string
   category: string
+  published: string
+  readingTime: string
   readMinutes: (minutes: number) => string
   updated: (date: string) => string
   breadcrumb: string

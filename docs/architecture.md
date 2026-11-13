@@ -112,6 +112,9 @@ RSS 的链接都用它。文章、归档、标签和搜索页各自在 `generate
 
 `AkMobileMenu` 的实例 ID 仍由模块级计数器生成。`src/components/site-nav.tsx` 用 `useSyncExternalStore` 将它延迟到 hydration 后挂载，避免服务端与浏览器的计数不同导致 ID 不匹配。
 
+目录保留服务端首屏 HTML：桌面标题使用 `AkHeading`，移动折叠使用原生 `AkCollapsible`。不再使用内部 ID 来自模块计数器的 `AkPanel` / `AkCollapseItem`；后者即使传入 `name`，内部 `aria-controls` 仍使用自动 ID，多次服务端渲染会与浏览器产生 hydration 差异。
+
+
 `src/ui/` 提供包 `@swufefox/ak-blog` 的框架无关 React 组件。`BlogHero` 组合 `AkHero`，`PostList` 组合 `AkNewsList`，`FeaturedPost` 使用语义化文章和链接。站内 `PostNewsList` 负责将文章模型转成已格式化的 props，搜索直接传入高亮内容；公开组件不依赖 `siteConfig`、文件系统或 Next.js。
 
 `npm pack` 的 `prepack` 编译 ESM 与类型声明，并从当前源文件生成完整模板快照。CLI 从快照复制独立项目；组件与模板共用源代码，构建产物不进入源码库。详见[包使用与发布](package.md)。

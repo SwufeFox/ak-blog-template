@@ -100,7 +100,7 @@ npm run smoke:package
 Before npm publication, use the local tarball:
 
 ```sh
-npm exec --package=./swufefox-ak-blog-1.0.1.tgz -- ak-blog build --content ../my-content --out ../my-content/out
+npm exec --package=./swufefox-ak-blog-1.0.2.tgz -- ak-blog build --content ../my-content --out ../my-content/out
 ```
 
 See [deployment](deploy.md) for Cloudflare Pages and other static hosts, and [writing](writing.md) for content syntax.
@@ -116,7 +116,7 @@ A GitHub repository and an npm package are separate resources. The first success
 ```sh
 npm login --registry=https://registry.npmjs.org
 npm pack
-npm publish ./swufefox-ak-blog-1.0.1.tgz --access public
+npm publish ./swufefox-ak-blog-1.0.2.tgz --access public
 ```
 
 Complete login and 2FA locally. `publishConfig.registry` fixes publication to the official npm registry even when installations use a mirror. The scoped package is public.
@@ -132,6 +132,8 @@ After the package exists, add its GitHub Actions Trusted Publisher with these ex
 | Allowed actions | Enable direct `npm publish` |
 
 Use the matching GitHub environment. New npm trusted-publisher configurations can be stage-only by default, so direct publishing must be enabled. No long-lived `NPM_TOKEN` is needed for subsequent releases. npm generates provenance for trusted publication from the public repository. See [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/).
+
+A new connection remains `Pending validation` until this GitHub Actions workflow successfully publishes a new version through OIDC before npm's displayed deadline. A local authenticated publication or a dry run does not validate the connection.
 
 ### Automated checks and releases
 

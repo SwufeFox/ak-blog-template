@@ -200,7 +200,7 @@ npm run smoke:package
 尚未发布到 npm 时，可在仓库根目录用本地产物构建：
 
 ```sh
-npm exec --package=./swufefox-ak-blog-1.0.1.tgz -- ak-blog build --content ../my-content --out ../my-content/out
+npm exec --package=./swufefox-ak-blog-1.0.2.tgz -- ak-blog build --content ../my-content --out ../my-content/out
 ```
 
 ## 首次发布与自动发布
@@ -210,7 +210,7 @@ GitHub 仓库和 npm 包是两个独立资源。首次成功的 `npm publish` �
 ```sh
 npm login --registry=https://registry.npmjs.org
 npm pack
-npm publish ./swufefox-ak-blog-1.0.1.tgz --access public
+npm publish ./swufefox-ak-blog-1.0.2.tgz --access public
 ```
 
 发布目标由 `publishConfig.registry` 固定为 npm 官方 registry。发布账号需要 `@swufefox` scope 权限；登录与 2FA 在本机完成。
@@ -224,6 +224,8 @@ npm publish ./swufefox-ak-blog-1.0.1.tgz --access public
 | Workflow filename | `publish.yml` |
 | Environment name | `npm-publish` |
 | Allowed actions | 启用直接 `npm publish` |
+
+新连接显示 `Pending validation` 时，需要在 npm 提示的期限内，由这份 GitHub Actions 工作流成功发布一次新版本。本机登录发布和 `dry_run` 不会验证 OIDC 连接。
 
 [CI](https://github.com/SwufeFox/ak-blog/blob/main/.github/workflows/ci.yml) 在 `main` push、PR 和手动运行时检查博客与实际包消费。[Publish](https://github.com/SwufeFox/ak-blog/blob/main/.github/workflows/publish.yml) 在 `v*` 标签或手动运行时检查并发布；手动运行默认 `dry_run: true`，只生成可下载产物。
 

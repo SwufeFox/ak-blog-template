@@ -8,7 +8,7 @@ const dist = join(root, 'dist')
 const template = join(dist, 'template')
 const manifest = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'))
 
-// These are application runtime dependencies; the published UI has only peers.
+// The standalone initializer separates app dependencies from developer tooling.
 const runtimeDependencies = [
   '@swufefox/ak-ui-react',
   'echarts',
@@ -30,6 +30,7 @@ const runtimeDependencies = [
   'remark-rehype',
   'unified',
   'unist-util-visit',
+  'vfile',
 ]
 const developmentDependencies = [
   '@types/hast',
@@ -44,7 +45,7 @@ const developmentDependencies = [
 
 function selectDependencies(names) {
   return Object.fromEntries(names.map((name) => {
-    const version = manifest.devDependencies[name]
+    const version = manifest.dependencies?.[name] ?? manifest.devDependencies?.[name]
     if (!version) throw new Error(`Missing template dependency: ${name}`)
     return [name, version]
   }))
@@ -52,9 +53,9 @@ function selectDependencies(names) {
 
 // Only the directories and root files below enter the snapshot. Never follow
 // symlinks or include dotfiles, credentials, caches or nested build output.
-const excludedDirectories = new Set(['node_modules', 'dist', 'build', 'out', 'coverage', 'cache'])
+const excludedDirectories = { node_modules: true, dist: true, build: true, out: true, coverage: true, cache: true }
 function excluded(name) {
-  return name.startsWith('.') || excludedDirectories.has(name)
+  return name.startsWith('.') || excludedDirectories[name] === true
     || /^(?:secrets?|credentials?)(?:[._-]|$)/i.test(name)
     || /\.(?:pem|key|p12|pfx|jks|keystore|tsbuildinfo|log|tgz)$/i.test(name)
 }
@@ -83,6 +84,8 @@ await mkdir(template, { recursive: true })
 for (const directory of ['src', 'content', 'public']) {
   await copyTree(join(root, directory), join(template, directory))
 }
+await mkdir(join(template, 'scripts'), { recursive: true })
+await copyFile(join(root, 'scripts/preview.mjs'), join(template, 'scripts/preview.mjs'))
 await mkdir(join(template, 'docs'), { recursive: true })
 for (const entry of await readdir(join(root, 'docs'), { withFileTypes: true })) {
   if (entry.isFile() && entry.name.endsWith('.md')) {
@@ -94,7 +97,7 @@ for (const file of ['next.config.ts', 'tsconfig.json', 'eslint.config.mjs', 'LIC
 }
 await writeFile(join(template, 'README.md'), `# My ak-blog
 
-由 @swufefox/ak-blog 创建的独立双语博客。需要 Node.js 20.9 以上。
+由 @swufefox/ak-blog 创建的独立双语静态博客。Node.js 20.9 以上仅用于开发、构建与本地预览。
 
 ## 开始
 
@@ -103,7 +106,7 @@ npm install
 npm run dev
 \`\`\`
 
-修改 \`src/site.config.ts\` 配置站点，在 \`content/posts/\` 写中文文章，在 \`content/posts/en/\` 写英文翻译。第一次安装后提交生成的 \`package-lock.json\`，后续可使用 \`npm ci\`。
+在 \`src/site.override.json\` 配置站点，在 \`content/posts/\` 写中文文章，在 \`content/posts/en/\` 写英文翻译。第一次安装后提交生成的 \`package-lock.json\`，后续可使用 \`npm ci\`。
 
 ## 检查与部署
 
@@ -114,7 +117,7 @@ npm run build
 npm start
 \`\`\`
 
-生产构建前设置 \`NEXT_PUBLIC_SITE_URL\`。部署需要 Node 服务器。
+生产构建前设置 \`NEXT_PUBLIC_SITE_URL\`。部署 \`out/\` 中的静态文件；生产环境不需要 Node 服务器。\`npm start\` 在本地预览导出的文件。
 
 - [写文章](docs/writing.md)
 - [配置与主题](docs/configuration.md)
@@ -141,4 +144,4 @@ await writeFile(join(template, 'package.json'), `${JSON.stringify({
   dependencies: selectDependencies(runtimeDependencies),
   devDependencies: selectDependencies(developmentDependencies),
 }, null, 2)}\n`)
-console.log('Built dist/ui, dist/style.css and the current-source app snapshot in dist/template.')
+console.log('Built dist/ui, dist/build, dist/style.css and the current-source app snapshot in dist/template.')

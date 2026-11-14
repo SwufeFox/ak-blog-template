@@ -1,95 +1,102 @@
 # 部署
 
-产物是一个标准的 Next.js 应用。页面都在构建时生成好了，但有三处需要运行时，所以默认面向
-Node 主机，而不是纯文件托管：
+`@swufefox/ak-blog` 构建完整的静态站。Node 用于安装依赖、读取 Markdown 和执行构建；线上只需托管 `out/` 中的文件，不需要 Node 服务、Workers 或 Pages Functions。
 
-| 运行时依赖 | 文件 | 作用 |
-| --- | --- | --- |
-| 代理 | `src/proxy.ts` | 把 `/zh/…` 308 回根路径 |
-| 动态 404 | `src/app/[locale]/[...rest]/page.tsx` | 未知路径返回带站点外壳的 404 |
-| 图片路由 | `src/app/content/[...path]/route.ts` | 提供 `content/images/` 里的图片 |
+## 独立内容仓库
 
-## 构建
+仓库根目录包含 `posts/`、可选的 `posts/en/`、`images/` 和 `site.json`，不需要 Next.js 源码：
+
+```sh
+npx @swufefox/ak-blog build --content . --out out
+```
+
+也可以从另一个工作目录调用模板包：
+
+```sh
+npx @swufefox/ak-blog build --content ../my-content --out ./public-blog
+```
+
+`--content` 指向直接包含 `posts/` 的目录。构建器不会把模板示例文章混入内容仓库，不在输入目录安装依赖，不修改源文章。目标目录可为空或不存在；已有目标必须是本工具生成的目录。失败的重建保留上一次有效产物。
+
+## Cloudflare Pages
+
+连接内容仓库并选择以下设置：
+
+| 设置 | 值 |
+| --- | --- |
+| Framework preset | None |
+| Build command | `npx --yes @swufefox/ak-blog build --content . --out out` |
+| Build output directory | `out` |
+| Node 构建版本 | 20.9+，建议 22 或更新的 LTS |
+| `NEXT_PUBLIC_SITE_URL` | 实际站点 origin，如 `https://blog.example.com` |
+
+如果内容位于 `content/posts/`，使用 `--content ./content`。正式部署请固定已验证的 npm 包版本；首次安装包会下载构建依赖，构建命令本身不再运行 npm 安装。
+
+不要选择 Next.js 服务端适配器，也不需要为本模板创建 Functions。Pages 直接提供 HTML、CSS、JS 和图片。
+
+随产物分发的主机配置：
+
+- `_redirects` 将旧 `/zh`、`/zh/*` 地址 308 到默认语言的根路径。
+- `_headers` 配置文章图片和 feed 的静态响应头。
+- `404.html` 提供默认中文站点外壳的错误页；静态主机负责返回 HTTP 404。
+
+正文和页面的中英文地址保持 `/` 与 `/en`。这两个入口在构建时真正生成，不依赖运行时 rewrites，也不通过复制 `/zh` 产物伪装根路由。
+
+## 自定义源码项目
+
+使用 `ak-blog init my-blog` 或克隆模板后：
 
 ```sh
 npm install
 npm run build
-npm start        # 默认 http://localhost:3000
+npm start
 ```
 
-Node 20.9 以上。端口用 `PORT` 环境变量改：`PORT=8080 npm start`。
+`npm run build` 使用 Next.js 的静态导出，生成 `out/`。`npm start` 是本地文件预览服务器，默认 `127.0.0.1:3000`；可通过 `PORT` 和 `HOST` 修改监听地址。它读取导出的文件，对未知地址返回自定义 `404.html` 和 HTTP 404，不使用 SPA 的 200 回退。
 
-站点地址在构建时写进 canonical、RSS 和 sitemap，所以**构建前**就要定下来：
+开发界面仍可运行 `npm run dev`。部署时上传 `out/`，不是 `.next/`，也不运行 `next start`。
 
-```sh
-NEXT_PUBLIC_SITE_URL=https://blog.example.com npm run build
-```
+## 域名与路径
 
-或者直接改 `src/site.config.ts` 的 `url`。
+在 `site.json` 中写入 `url`，或者构建前设置 `NEXT_PUBLIC_SITE_URL`。环境变量优先，地址必须是无子路径的 HTTP(S) origin。修改域名后需要重新构建，因为 canonical、RSS、sitemap、Open Graph 都在构建时确定。
 
-## Vercel / Netlify
+当前模板面向站点根路径部署，不宣称把 `url` 改成 `/blog` 就能支持子路径。若需要 `/blog`，必须同时设计构建配置、静态资源和全部路由前缀。
 
-连上仓库即可，框架会自动识别。没有需要填的环境变量（除非想覆盖 `url`）。
+## 其他静态主机
 
-## 自己的服务器
+静态文件采用干净 URL：`out/en.html` 对应 `/en`，`out/posts/hello.html` 对应 `/posts/hello`。主机需支持把无扩展名地址解析到相应 `.html` 文件。
 
-```sh
-git clone <repo> && cd <repo>
-npm ci
-NEXT_PUBLIC_SITE_URL=https://blog.example.com npm run build
-PORT=3000 npm start
-```
-
-前面放一层 nginx / Caddy 做 TLS 和域名即可。`next start` 不需要额外的进程管理器参数，
-用 systemd、pm2 或容器都行。
-
-## 子路径
-
-部署在 `https://example.com/blog` 这类子路径下时，只需要把 `url` 写成带路径的地址，
-页面里的绝对链接、canonical、RSS、sitemap 会跟着变。不需要 `basePath`。
-
-如果反向代理会把前缀剥掉（例如 nginx 的 `location /blog/ { proxy_pass http://127.0.0.1:3000/; }`），
-那 `url` 仍然写完整地址，路由本身看到的是剥掉前缀后的路径，两边不会打架。
-
-## 纯静态托管
-
-`output: 'export'` 不支持重写、重定向和代理（见 Next.js 文档的 Unsupported Features），
-而本模板恰好用重写把默认语言的页面放到了根路径。所以要走纯静态，需要接受前缀或让托管方补上重写：
-
-1. 删掉 `src/proxy.ts` 和 `src/app/[locale]/[...rest]/page.tsx`。
-   前者导出模式不会执行，后者是无法预渲染的动态路由。
-2. 把 `content/images/` 里的图片移到 `public/`，正文里的相对路径改成 `/images/…`，
-   然后删掉 `src/app/content/[...path]/route.ts`（它同样无法预渲染）。
-3. 在 `next.config.ts` 里打开 `output: 'export'`，并按托管方的习惯决定
-   `trailingSlash`（`true` 产出 `out/posts/x/index.html`，`false` 产出 `out/posts/x.html`）。
-4. 产物里默认语言的页面在 `/zh/…` 下，没有 `/posts/x`。要么接受这个前缀，
-   要么在托管方那里补一条重写（nginx 示例）：
+nginx 示例：
 
 ```nginx
-location ~ ^/(posts|tags|search)/ {
-  rewrite ^/(.*)$ /zh/$1 last;
+root /srv/blog/out;
+index index.html;
+
+location = /zh { return 308 /; }
+location ~ ^/zh/(.*)$ { return 308 /$1; }
+
+location / {
+  try_files $uri $uri.html $uri/ =404;
 }
-location = /feed.xml {
-  rewrite ^ /zh/feed.xml last;
-}
+
+error_page 404 /404.html;
 ```
 
-`out/404.html` 是 404 页，交给托管方配置。
+Vercel、Netlify 或对象存储/CDN 也可以托管同一份静态产物；将输出目录设为 `out`，并按平台配置 clean URLs、404、重定向和缓存。Cloudflare 的 `_headers` / `_redirects` 在其他主机上不一定会被解释。
 
-不追求纯文件的话，前两种部署方式（Vercel / 自建 Node）不需要做这些，也保留了
-`/posts/x` 这样的干净地址。
+## 上线检查
 
-## 上线后检查
+检查以下地址及内容：
 
-```sh
-curl -sI  https://blog.example.com/            # 200
-curl -sI  https://blog.example.com/en          # 200
-curl -sI  https://blog.example.com/feed.xml    # 200, application/rss+xml
-curl -s   https://blog.example.com/sitemap.xml | head
-curl -sI  https://blog.example.com/nope        # 404
-curl -sI  https://blog.example.com/content/images/pipeline.svg   # 200
-curl -sI  https://blog.example.com/og                             # 200, image/png
-```
+| 地址 | 预期 |
+| --- | --- |
+| `/`、`/en` | 对应语言首页，HTTP 200 |
+| `/posts/<slug>`、`/en/posts/<slug>` | 真实文章和对应 canonical |
+| `/tags`、`/search` | 静态页面，搜索在浏览器过滤 |
+| `/feed.xml`、`/en/feed.xml` | 对应语言 RSS |
+| `/sitemap.xml`、`/robots.txt` | 使用实际站点域名 |
+| `/content/images/<file>` | 原始图片及正确类型 |
+| `/og.png` | 1200×630 PNG 社交卡片 |
+| 不存在的路径 | 自定义错误页，HTTP 404 |
 
-图片带 `Cache-Control: public, max-age=31536000, immutable`，RSS 是一小时。
-静态页面由 Next 自己决定缓存头；放在 CDN 后面时按 HTML 的正常策略处理即可。
+再检查主题持久化、目录锚点、语言切换、图表、键盘焦点和窄屏溢出。不能用首页的 200 响应代替所有未知路径的 404。

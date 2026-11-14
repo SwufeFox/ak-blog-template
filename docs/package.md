@@ -1,133 +1,127 @@
-# @swufefox/ak-blog npm package
+# @swufefox/ak-blog package
 
-`@swufefox/ak-blog` 1.0.0 provides three React components and an offline CLI that creates a complete Next.js blog. Node.js 20.9 or newer is required. The library is ESM-only and ships TypeScript declarations. Its root entry has no Next.js, filesystem, site configuration, Markdown or chart-runtime imports.
+This package combines a reusable static blog template with a separate content repository. Node.js 20.9+ is required for the build tooling; the deployed site is HTML, CSS, browser JavaScript, images and feeds. It does not require a Node server, Cloudflare Worker or Pages Function.
 
-## Use the React components
+## Build a content repository
 
-Install the package and its peers in a React application:
+Input layout:
 
-```sh
-npm install @swufefox/ak-blog @swufefox/ak-ui-react@^2 react@^19 react-dom@^19
+```text
+content-repository/
+  posts/
+    hello.md
+    en/hello.md
+  images/
+    diagram.svg
+  site.json
 ```
 
-Peer ranges are `@swufefox/ak-ui-react ^2.0.0`, and React / React DOM `^18.2.0 || ^19.0.0`. Use matching React and React DOM versions. React 18 applications can keep their existing compatible versions. Next.js, Mermaid and the other template application dependencies are development dependencies of this repository; installing the library does not install them.
-
-Import both stylesheets once in your application's CSS-capable entry point, with the ak-ui stylesheet first:
-
-```tsx
-import '@swufefox/ak-ui-react/style.css'
-import '@swufefox/ak-blog/style.css'
-import {
-  BlogHero,
-  FeaturedPost,
-  PostList,
-  type PostListItem,
-} from '@swufefox/ak-blog'
-
-const posts: PostListItem[] = [{
-  href: '/posts/hello',
-  title: 'Hello, archive',
-  description: 'A first entry in a carefully kept collection.',
-  date: '2026-11-13',
-  dateLabel: 'November 13, 2026',
-  category: 'Notes',
-}]
-
-export function BlogIndex() {
-  return (
-    <main data-ak-theme="archive">
-      <BlogHero
-        eyebrow="Field notes"
-        title="A place for considered writing"
-        description="Articles, experiments and things worth keeping."
-      />
-      <FeaturedPost
-        {...posts[0]}
-        eyebrow="Featured"
-        readTime="3 min read"
-        actionLabel="Read article"
-      />
-      <PostList items={posts} label="Latest articles" empty="No articles yet." />
-    </main>
-  )
-}
-```
-
-The root exports `BlogHero`, `FeaturedPost`, `PostList`, and the types `BlogHeroProps`, `FeaturedPostProps`, `PostListProps`, `PostListItem`. Links are standard anchors; supply your own URLs, translated labels, date formatting and article data. Set `data-ak-theme="archive"` for the light theme or `data-ak-theme="terminal"` for the dark theme on the page root. The component CSS uses ak-ui tokens and is marked as a side effect so bundlers retain it. It does not include the template's site layout or Markdown styles.
-
-The components support server rendering. Import JavaScript and types alone in a plain Node SSR program; Node does not load CSS files. Let your framework or bundler handle stylesheet imports. These components wrap ak-ui React primitives, so React Server Component applications retain ak-ui's client boundaries and hydration requirements. The library does not provide routing, content loading, search, a theme toggle or a Markdown renderer.
-
-## Create a complete blog
-
-Once the package is published, the standard invocation is:
+Only `posts/` and at least one Markdown file are required. English translations, images and site configuration are optional. Matching filenames connect translations. The directory may be a separate Git checkout; it needs no Next.js sources or package manifest.
 
 ```sh
-npx @swufefox/ak-blog my-blog
-cd my-blog
-npm install
-npm run dev
+npx @swufefox/ak-blog build --content ../content-repository --out ./out
 ```
 
-`npx` may download the package. The `ak-blog` command itself only copies the bundled template: it makes no network requests and never installs packages, runs scripts or overwrites existing files. It accepts a new directory or an existing empty directory; any nonempty target, file or target symlink is rejected. Quote paths containing spaces. The project name defaults to a lowercase, hyphenated version of the directory name, and `--name` accepts an explicit valid lowercase npm name, including scoped names:
+The builder uses the template bundled with the installed version, removes its sample content from the staging area, copies the caller's posts/images, applies site configuration, and executes a real Next.js static build. It never runs npm or downloads dependencies during `build`; npm/npx obtains declared dependencies when installing the package.
+
+Output publication happens only after a successful build. An absent or empty output directory is accepted; nonempty output must carry the marker from an earlier ak-blog build. Input trees, symlink targets and unrelated nonempty directories are protected. A failed rebuild leaves previous output available. Temporary staging is removed. The ownership marker contains the generator identity, not the caller's filesystem path.
+
+## CLI
 
 ```sh
-ak-blog "My writing space" --name my-writing-space
-ak-blog my-blog --name @example/my-blog
+ak-blog build --content <directory> --out <directory> [--config <file>]
+ak-blog init <directory> [--name <npm-project-name>]
 ak-blog --help
 ak-blog --version
 ```
 
-The generated application has `private: true`, the original `dev`, `build`, `start` and `lint` scripts, application runtime dependencies, and TypeScript / ESLint development dependencies. It uses its own copied UI source and styles; it does not depend on this npm package. The snapshot includes current `src`, `content`, `public`, application configuration, `.gitignore`, a project-specific README, MIT license and guides. It excludes package publishing scripts, caches, generated build output, node_modules, environment files, private-key files and symlinks. The included package-maintenance guide describes the original source repository; its publishing commands do not apply to generated blogs.
+Paths containing spaces must be quoted. `--content` and `--out` are resolved from the calling directory. `--config` is optional; when omitted, `<contentDir>/site.json` is used if present. Invalid input or build failures produce contextual errors and a nonzero exit status.
 
-The generated application intentionally has no lockfile: this repository's lock describes the library's development dependency graph, where application runtime dependencies are development-only. Run `npm install` once in the generated project and commit its new `package-lock.json`; subsequent installs can use `npm ci`. Dependency ranges are taken from the current root manifest rather than a second version list.
+`init` creates a standalone source project for people who want to modify template internals. It accepts a new or empty directory, never overwrites files and does not install dependencies. The generated private project supports `npm run dev`, `npm run build`, and `npm start` (a local static-file preview). It intentionally starts without a lockfile; run `npm install`, commit the resulting lock, then use `npm ci` for later installations.
 
-The full blog needs a Node server in production. Its locale proxy, image route and dynamic 404 prevent static export as configured. Markdown is processed during the build; Mermaid and ECharts run in the browser where used. Set `NEXT_PUBLIC_SITE_URL` before a production build, then run `npm run build` and `npm start`. See [deployment](deploy.md), [configuration](configuration.md), and [writing](writing.md).
+## Programmatic build API
 
-## Build and try a local tarball
+```js
+import { buildBlog } from '@swufefox/ak-blog/build'
 
-From the repository root:
+await buildBlog({
+  contentDir: '../content-repository',
+  outDir: './out',
+  configFile: './site.json', // optional
+})
+```
+
+`buildBlog(options: BuildBlogOptions): Promise<void>` is a Node-only entry point. It is separate from the React entry so browser consumers do not import filesystem or process APIs. The package exports `BuildBlogOptions` and `SiteOptions` types from this subpath.
+
+`SiteOptions` accepts optional `title`, `suffix`, `description` (`zh` / `en`), `url`, `author`, `email`, `about`, `repo`, `sameAs`, `postsOnHome`, and `license` (`name` / `url`). Nested description/license fields merge with defaults. Unknown fields and invalid types fail with the configuration path. `url` must be an absolute HTTP(S) origin; trailing slashes are normalized. `NEXT_PUBLIC_SITE_URL` overrides the JSON URL during the build.
+
+The template keeps Chinese at `/` and English at `/en`. Adding other languages is a source-level customization because UI strings and route definitions must remain exhaustive.
+
+## React components
+
+The root exports `BlogHero`, `FeaturedPost`, `PostList` and their corresponding props types, plus `PostListItem`. Use matching React / React DOM 19.3+ and ak-ui React 2.x. The package includes its build-tool dependencies; that installation footprint does not imply a production server requirement.
+
+Import styles once, in order:
+
+```tsx
+import '@swufefox/ak-ui-react/style.css'
+import '@swufefox/ak-blog/style.css'
+```
+
+In Next.js, place CSS imports in the root layout. The component entry itself contains no Node, Next.js, content-loading or chart-runtime imports and supports server rendering. Plain Node SSR programs should import JavaScript only and let a framework or bundler handle CSS.
+
+| Component | Required props | Optional props |
+| --- | --- | --- |
+| `BlogHero` | `title`, `description` | `eyebrow`, `titleAs` (default `h1`), `className` |
+| `FeaturedPost` | `href`, `title`, `description`, `date`, `dateLabel`, `readTime`, `eyebrow`, `actionLabel` | `category`, `className` |
+| `PostList` | `items`, `label`, `empty` | `className` |
+
+`PostListItem` contains `href`, `title`, `description`, `date`, `dateLabel`, and optional `category`. Title and description accept React nodes, allowing highlighted search results. Dates, translated labels, reading time and URLs are supplied by the caller.
+
+Set `data-ak-theme="archive"` or `terminal` on the page root. Component CSS is scoped and marked as a side effect; it does not include global page resets or the complete Markdown layout. Existing static sites may use these components while retaining their own content and routing. To get the complete blog behavior from content alone, use the build API or CLI.
+
+## Local package verification
+
+From this source repository:
 
 ```sh
 npm ci
-npm run build:package
+npm run lint
+npm run build
+npx tsc --noEmit
 npm pack
+npm run smoke:package
 ```
 
-`build:package` invokes the installed TypeScript compiler without adding a build dependency. It regenerates `dist/ui/index.js` and declarations, copies `src/styles/components.css` to `dist/style.css`, and creates `dist/template` from the current source. `npm pack` runs the same build through `prepack`, so the tarball always contains a fresh snapshot. Neither command builds the Next.js application or publishes anything. The output is `swufefox-ak-blog-1.0.0.tgz`.
+`prepack` compiles ESM and declarations, copies component CSS, and creates a current-source `dist/template` snapshot. No copied template is committed. The package includes the builder, UI, template, CLI, guides and license; it excludes caches, private keys, environment files, source symlinks and package-maintenance scripts.
 
-Install this exact tarball in a separate project, replacing the absolute example path with your checkout path:
+`smoke:package` installs the actual tarball into an isolated consumer with development dependencies omitted. It exercises CLI and API builds using independent bilingual and Chinese-only content, checks images/feeds/metadata/404/OG, excludes bundled examples and drafts, and verifies unrelated-output protection and preservation after malformed content fails. It creates and removes its own temporary fixtures.
+
+Before npm publication, use the local tarball:
 
 ```sh
-mkdir ak-blog-consumer
-cd ak-blog-consumer
-npm init -y
-npm install "/absolute/path/to/swufefox-ak-blog-1.0.0.tgz" @swufefox/ak-ui-react@^2 react@^19 react-dom@^19
-node --input-type=module -e 'import React from "react"; import { renderToString } from "react-dom/server"; import { BlogHero } from "@swufefox/ak-blog"; console.log(renderToString(React.createElement(BlogHero, { title: "Hello", description: "SSR from the local tarball" })));'
-node node_modules/@swufefox/ak-blog/bin/ak-blog.mjs "../generated blog" --name generated-blog
-cd "../generated blog"
-npm install
-npm run build
+npm exec --package=./swufefox-ak-blog-1.0.1.tgz -- ak-blog build --content ../my-content --out ../my-content/out
 ```
 
-In a TypeScript React consumer, the import example above exercises declaration resolution with either `moduleResolution: "bundler"` or `"NodeNext"`. CommonJS `require()` is not an exported entry point. Local CLI testing can also use `node bin/ak-blog.mjs "../generated blog"` directly from the repository after `build:package`.
+See [deployment](deploy.md) for Cloudflare Pages and other static hosts, and [writing](writing.md) for content syntax.
 
 ## Publish workflow
 
-The release convention follows [ak-ui-react's publish workflow](https://github.com/SwufeFox/ak-ui-react/blob/master/.github/workflows/publish.yml): `v*` tags, manual dry runs, the `npm-publish` environment, Node 22.14.0, npm 11.5.1 or newer, and OIDC authentication. The package's repository metadata points to `https://github.com/SwufeFox/ak-blog.git`.
+The release convention follows [ak-ui-react's publish workflow](https://github.com/SwufeFox/ak-ui-react/blob/master/.github/workflows/publish.yml): `v*` tags, manual dry runs, the `npm-publish` environment, Node 22.14.0, npm 11.5.1 or newer, and OIDC authentication. Repository metadata points to `https://github.com/SwufeFox/ak-blog.git`.
 
 ### First publication
 
-A GitHub repository and an npm package are separate resources. An npm package is created by its first successful publication; it does not need an empty package to be created on the website first. If `@swufefox/ak-blog` does not yet exist, an owner with permission to publish under `@swufefox` must publish the first version interactively:
+A GitHub repository and an npm package are separate resources. The first successful publication creates the npm package. An owner with permission to publish under `@swufefox` can bootstrap it interactively:
 
 ```sh
 npm login --registry=https://registry.npmjs.org
 npm pack
-npm publish ./swufefox-ak-blog-1.0.0.tgz --access public
+npm publish ./swufefox-ak-blog-1.0.1.tgz --access public
 ```
 
-Complete browser login and any 2FA prompt locally. `publishConfig.registry` fixes publication to the official npm registry even when dependency installation uses a mirror. The manifest also sets public access for the scoped package.
+Complete login and 2FA locally. `publishConfig.registry` fixes publication to the official npm registry even when installations use a mirror. The scoped package is public.
 
-After the package exists, open its npm settings and add a GitHub Actions Trusted Publisher with these exact values:
+After the package exists, add its GitHub Actions Trusted Publisher with these exact values:
 
 | Field | Value |
 | --- | --- |
@@ -137,25 +131,19 @@ After the package exists, open its npm settings and add a GitHub Actions Trusted
 | Environment name | `npm-publish` |
 | Allowed actions | Enable direct `npm publish` |
 
-Use a matching `npm-publish` environment in the GitHub repository. New npm trusted-publisher configurations can be stage-only by default; the direct-publish permission must be enabled for this workflow. The workflow has `id-token: write` and uses a GitHub-hosted runner. It needs no long-lived `NPM_TOKEN`. npm generates provenance for trusted publications from this public repository. See [npm's trusted publishing requirements](https://docs.npmjs.com/trusted-publishers/).
+Use the matching GitHub environment. New npm trusted-publisher configurations can be stage-only by default, so direct publishing must be enabled. No long-lived `NPM_TOKEN` is needed for subsequent releases. npm generates provenance for trusted publication from the public repository. See [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/).
 
-### Repository workflows
+### Automated checks and releases
 
-`CI` runs on pushes to `main`, pull requests, and manual dispatch. It installs the lockfile, runs ESLint, builds the full Next.js blog (including content validation), checks TypeScript, and runs `npm pack`. The actual `.tgz` is uploaded as an artifact.
+`CI` runs on `main` pushes, pull requests and manual dispatch. It installs the lockfile, lints, builds the static demo, checks types, packs the package and runs the independent content-consumer smoke. The `.tgz` is uploaded as an artifact.
 
-`Publish` runs on `v*` tags and manual dispatch. It uses the same application checks and package build. For tags, the version after `v` must equal `package.json.version`; a mismatch stops before installing or publishing. It uploads the actual tarball, then publishes those same bytes. Release dependency caching is not enabled. A manual run defaults to `dry_run: true`, which skips npm publication; tag pushes publish after checks pass.
+`Publish` uses the same checks. A `v*` tag must match `package.json.version`; a mismatch stops before installation. The job uploads and publishes the same tarball. Release dependency caching is not enabled. Manual dispatch defaults to `dry_run: true`, which produces the artifact without publishing; environment protection still applies.
 
-Before a release, review the content that enters the generated template and update the version and lockfile together. From a clean working tree:
+For a later version, from a clean working tree:
 
 ```sh
 npm version patch
 git push origin main --follow-tags
 ```
 
-After a manual first publication of `1.0.0`, this creates `v1.0.1`. Do not push `v1.0.0` to republish the bootstrap version: npm versions cannot be overwritten. `npm version minor` or `npm version major` uses the same workflow for larger releases.
-
-### Trying the release path without publishing
-
-In GitHub Actions, select **Publish**, choose **Run workflow**, and leave **dry_run** checked. Download the `ak-blog-<commit>` artifact to inspect or install the generated package. This exercises installation, checks, build, and packaging without requiring an npm publication. Environment protection rules still apply to that job.
-
-`ENEEDAUTH` during a real release usually means the trusted publisher is missing or its owner, repository, workflow filename, environment, or allowed action does not match. A first package publication must be completed before configuring its package-level trusted publisher. Local packaging and generator commands never publish to a registry.
+Do not push the already manually published bootstrap version to publish it again. npm versions cannot be overwritten. Trusted-publisher authentication errors require checking the exact owner, repository, workflow filename, environment and allowed action; local packaging and content builds never publish anything.

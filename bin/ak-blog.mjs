@@ -9,19 +9,22 @@ const packageRoot = fileURLToPath(new URL('../', import.meta.url))
 const manifest = JSON.parse(await readFile(join(packageRoot, 'package.json'), 'utf8'))
 const help = `ak-blog ${manifest.version}
 
-Usage: ak-blog <directory> [--name <npm-project-name>]
+Usage:
+  ak-blog build --content <directory> --out <directory> [--config <file>]
+  ak-blog init <directory> [--name <npm-project-name>]
 
-Create the bundled Next.js blog in a new or existing empty directory.
-Paths containing spaces are supported when quoted. The project name defaults
-from the directory name, converted to lowercase with spaces replaced by hyphens.
+build  Export the bundled blog with posts/, optional images/ and site.json from
+       a content repository. No Next.js source, install or network is required.
+       Output must be empty, absent, or a previous ak-blog build.
+init   Copy the full editable template into a new or existing empty directory.
 
-Options:
-  --name <name>   Set a lowercase npm project name (scoped names are supported)
-  -h, --help     Show this help
-  -v, --version  Show the package version
+Quote paths containing spaces. Relative paths resolve from the current directory.
+--config overrides the default <content>/site.json file.
+--name sets the initializer's npm project name (scoped names are supported).
+-h, --help shows help; -v, --version prints the package version.
 
-This command never installs dependencies, contacts a server, or overwrites files.
-After creation, run npm install, then npm run dev in the project directory.
+After init, run npm install, then npm run dev in the project directory.
+Production: npm run build exports out/; npm start previews those static files.
 `
 
 function validProjectName(name) {
@@ -61,6 +64,30 @@ async function main() {
     console.log(manifest.version)
     return
   }
+  const command = args.shift()
+  if (args.length === 1 && ['--help', '-h'].includes(args[0])) {
+    console.log(help)
+    return
+  }
+  if (command === 'build') {
+    const values = {}
+    for (let index = 0; index < args.length; index++) {
+      const argument = args[index]
+      const equals = argument.indexOf('=')
+      const flag = equals === -1 ? argument : argument.slice(0, equals)
+      if (!['--content', '--out', '--config'].includes(flag)) throw new Error(`Unknown build argument: ${argument}`)
+      if (values[flag] !== undefined) throw new Error(`Specify ${flag} only once.`)
+      const value = equals === -1 ? args[++index] : argument.slice(equals + 1)
+      if (!value || value.startsWith('--')) throw new Error(`${flag} requires a path.`)
+      values[flag] = value
+    }
+    if (!values['--content'] || !values['--out']) throw new Error('build requires --content and --out. Run ak-blog --help for usage.')
+    const { buildBlog } = await import('../dist/build/index.js')
+    await buildBlog({ contentDir: values['--content'], outDir: values['--out'], configFile: values['--config'] })
+    console.log(`Built static blog in ${resolve(values['--out'])}`)
+    return
+  }
+  if (command !== 'init') throw new Error(`Unknown command: ${command}. Use ak-blog build or ak-blog init; run ak-blog --help for usage.`)
 
   let targetArgument
   let projectName

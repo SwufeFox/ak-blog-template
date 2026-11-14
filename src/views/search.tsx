@@ -6,16 +6,9 @@ import { ui } from '@/lib/i18n'
 import { kicker } from '@/lib/kickers'
 import { formatDate, getPosts } from '@/lib/posts'
 import { searchPath } from '@/lib/urls'
-import { siteConfig } from '@/site.config'
-import { requireLocale } from '@/lib/locale'
+import { siteConfig, type Locale } from '@/site.config'
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string }>
-}): Promise<Metadata> {
-  const { locale } = await params
-  const resolved = requireLocale(locale)
+export function getSearchMetadata(resolved: Locale): Metadata {
   return {
     title: siteConfig.nav[resolved].search,
     description: siteConfig.description[resolved],
@@ -29,9 +22,7 @@ export async function generateMetadata({
   }
 }
 
-export default async function SearchPage({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = await params
-  const resolved = requireLocale(locale)
+export default async function SearchPage({ locale: resolved }: { locale: Locale }) {
   const copy = ui(resolved)
 
   const posts = await getPosts(resolved)

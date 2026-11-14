@@ -98,6 +98,6 @@ flowchart TD
 
 ## Summary
 
-Save the file, refresh the page, and it is there. To publish, run `npm run build`, then
-serve it with `npm start`; the proxy, dynamic 404 and image route need a Node runtime, so
-the `.next` folder cannot be dropped on a purely static host.
+Rebuild after writing. A content-only repository uses `ak-blog build --content . --out out`;
+a source project uses `npm run build`. Upload `out/` to Cloudflare Pages or another static host.
+No production Node server is required; `npm start` only previews the exported files locally.

@@ -1,12 +1,6 @@
 import { getPosts, siteUrl, toISODate } from '@/lib/posts'
 import { feedPath, postPath } from '@/lib/urls'
-import { isLocale, siteConfig } from '@/site.config'
-
-export const dynamic = 'force-static'
-
-export function generateStaticParams() {
-  return siteConfig.locales.map((locale) => ({ locale }))
-}
+import { siteConfig, type Locale } from '@/site.config'
 
 function escapeXml(value: string): string {
   return value
@@ -17,9 +11,7 @@ function escapeXml(value: string): string {
     .replace(/'/g, '&apos;')
 }
 
-export async function GET(_request: Request, { params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = await params
-  const resolved = isLocale(locale) ? locale : siteConfig.defaultLocale
+export async function getFeed(resolved: Locale) {
   const posts = await getPosts(resolved)
 
   const items = posts

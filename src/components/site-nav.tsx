@@ -24,6 +24,7 @@ interface Props {
   aboutUrl?: string
   otherLocale: Locale
   otherLocaleName: string
+  languageHref?: string
 }
 
 function noopSubscribe(): () => void {
@@ -38,7 +39,7 @@ function switchTarget(pathname: string, from: Locale, to: Locale): string {
   return `/${to}${rest === '/' ? '' : rest}`
 }
 
-export function SiteNav({ locale, labels, aboutUrl, otherLocale, otherLocaleName }: Props) {
+export function SiteNav({ locale, labels, aboutUrl, otherLocale, otherLocaleName, languageHref }: Props) {
   const pathname = usePathname()
   // ak-ui numbers its menu instances with a module level counter, so the ids it
   // renders on the server never match the ones the browser produces. The menu
@@ -72,7 +73,7 @@ export function SiteNav({ locale, labels, aboutUrl, otherLocale, otherLocaleName
         {links}
         {!isPost ? (
           <Link
-            href={switchTarget(pathname, locale, otherLocale)}
+            href={languageHref ?? switchTarget(pathname, locale, otherLocale)}
             hrefLang={otherLocale}
             lang={otherLocale}
             aria-label={labels.language}
@@ -89,7 +90,7 @@ export function SiteNav({ locale, labels, aboutUrl, otherLocale, otherLocaleName
           {links}
           {!isPost ? (
             <Link
-              href={switchTarget(pathname, locale, otherLocale)}
+              href={languageHref ?? switchTarget(pathname, locale, otherLocale)}
               hrefLang={otherLocale}
               lang={otherLocale}
             >

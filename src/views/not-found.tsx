@@ -1,18 +1,12 @@
-import type { Metadata } from 'next'
 import Link from 'next/link'
 import { AkCodeId, AkHeading, AkStripes, AkWatermark } from '@swufefox/ak-ui-react'
 
 import { ui } from '@/lib/i18n'
 import { homePath } from '@/lib/urls'
-import { siteConfig } from '@/site.config'
+import type { Locale } from '@/site.config'
 
-export const metadata: Metadata = {
-  title: ui(siteConfig.defaultLocale).notFoundTitle,
-  robots: { index: false, follow: false },
-}
-
-export default function NotFound() {
-  const copy = ui(siteConfig.defaultLocale)
+export default function NotFound({ locale }: { locale: Locale }) {
+  const copy = ui(locale)
 
   return (
     <section className="route-page error-page">
@@ -23,7 +17,7 @@ export default function NotFound() {
       <AkHeading className="error-page__heading" title={copy.notFoundTitle} level={1} size="lg" />
       <p className="route-head__summary">{copy.notFoundText}</p>
       <p className="error-page__action">
-        <Link className="cta" href={homePath(siteConfig.defaultLocale)}>
+        <Link className="cta" href={homePath(locale)}>
           {copy.notFoundAction}
         </Link>
       </p>

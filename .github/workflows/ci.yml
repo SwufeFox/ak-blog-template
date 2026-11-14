@@ -47,6 +47,9 @@ jobs:
       - name: Pack components and template
         run: npm pack
 
+      - name: Build an independent content repository
+        run: npm run smoke:package
+
       - name: Upload package
         uses: actions/upload-artifact@v4
         with:

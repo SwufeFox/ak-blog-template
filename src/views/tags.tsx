@@ -6,16 +6,9 @@ import { ui } from '@/lib/i18n'
 import { kicker } from '@/lib/kickers'
 import { getCategoryCounts, getPosts, getTags } from '@/lib/posts'
 import { tagPath, tagsPath } from '@/lib/urls'
-import { siteConfig } from '@/site.config'
-import { requireLocale } from '@/lib/locale'
+import { siteConfig, type Locale } from '@/site.config'
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string }>
-}): Promise<Metadata> {
-  const { locale } = await params
-  const resolved = requireLocale(locale)
+export function getTagsMetadata(resolved: Locale): Metadata {
   return {
     title: siteConfig.nav[resolved].tags,
     description: siteConfig.description[resolved],
@@ -28,9 +21,7 @@ export async function generateMetadata({
   }
 }
 
-export default async function TagsPage({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = await params
-  const resolved = requireLocale(locale)
+export default async function TagsPage({ locale: resolved }: { locale: Locale }) {
   const copy = ui(resolved)
 
   const [categories, tags, posts] = await Promise.all([

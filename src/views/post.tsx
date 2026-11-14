@@ -19,27 +19,13 @@ import {
   toISODate,
 } from '@/lib/posts'
 import { homePath, postPath, tagPath } from '@/lib/urls'
-import { siteConfig } from '@/site.config'
-import { requireLocale } from '@/lib/locale'
+import { siteConfig, type Locale } from '@/site.config'
 
-export async function generateStaticParams() {
-  const params: { locale: string; slug: string }[] = []
-  for (const locale of siteConfig.locales) {
-    for (const post of await getPosts(locale)) {
-      params.push({ locale, slug: post.slug })
-    }
-  }
-  return params
+export async function getPostParams(locale: Locale) {
+  return (await getPosts(locale)).map((post) => ({ slug: post.slug }))
 }
 
-
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string; slug: string }>
-}): Promise<Metadata> {
-  const { locale, slug } = await params
-  const resolved = requireLocale(locale)
+export async function getPostMetadata(resolved: Locale, slug: string): Promise<Metadata> {
   const post = await getPost(slug, resolved)
   if (!post) return {}
 
@@ -77,13 +63,7 @@ export async function generateMetadata({
   }
 }
 
-export default async function PostPage({
-  params,
-}: {
-  params: Promise<{ locale: string; slug: string }>
-}) {
-  const { locale, slug } = await params
-  const resolved = requireLocale(locale)
+export default async function PostPage({ locale: resolved, slug }: { locale: Locale; slug: string }) {
   const post = await getPost(slug, resolved)
   if (!post) notFound()
 

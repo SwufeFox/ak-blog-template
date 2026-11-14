@@ -4,6 +4,8 @@ import { getCategoryCounts, getPosts, getTags, siteUrl } from '@/lib/posts'
 import { homePath, postPath, tagPath, tagsPath } from '@/lib/urls'
 import { siteConfig } from '@/site.config'
 
+export const dynamic = 'force-static'
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const entries: MetadataRoute.Sitemap = []
 

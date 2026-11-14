@@ -1,9 +1,9 @@
 {
   "name": "@swufefox/ak-blog",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "license": "MIT",
-  "description": "A Next.js blog template with an editorial reading layout and the ak-ui design system.",
+  "description": "Build a bilingual static blog from a content repository with Next.js and ak-ui.",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/SwufeFox/ak-blog.git"
@@ -26,6 +26,10 @@
       "types": "./dist/ui/index.d.ts",
       "import": "./dist/ui/index.js"
     },
+    "./build": {
+      "types": "./dist/build/index.d.ts",
+      "import": "./dist/build/index.js"
+    },
     "./style.css": "./dist/style.css"
   },
   "sideEffects": ["**/*.css"],
@@ -34,6 +38,9 @@
   },
   "files": [
     "dist/ui",
+    "dist/build",
+    "dist/site-options.js",
+    "dist/site-options.d.ts",
     "dist/style.css",
     "dist/template",
     "bin",
@@ -43,18 +50,19 @@
   ],
   "peerDependencies": {
     "@swufefox/ak-ui-react": "^2.0.0",
-    "react": "^18.2.0 || ^19.0.0",
-    "react-dom": "^18.2.0 || ^19.0.0"
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "build": "next build --webpack",
+    "start": "node scripts/preview.mjs",
     "lint": "eslint src",
     "build:package": "node scripts/build-package.mjs",
+    "smoke:package": "node scripts/smoke-package.mjs",
     "prepack": "npm run build:package"
   },
-  "devDependencies": {
+  "dependencies": {
     "@swufefox/ak-ui-react": "^2.0.0",
     "echarts": "^6.1.0",
     "gray-matter": "^4.0.3",
@@ -75,13 +83,16 @@
     "remark-rehype": "^11.1.2",
     "unified": "^11.0.5",
     "unist-util-visit": "^5.2.0",
+    "vfile": "^6.0.3",
     "@types/hast": "^3.0.4",
     "@types/mdast": "^4.0.4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.4.6",
     "typescript": "^5"
+  },
+  "devDependencies": {
+    "eslint": "^9",
+    "eslint-config-next": "16.4.6"
   }
 }

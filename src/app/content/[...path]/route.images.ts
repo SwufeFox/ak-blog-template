@@ -1,16 +1,13 @@
 import { readFile, realpath } from 'node:fs/promises'
 import { extname, isAbsolute, relative, resolve, sep } from 'node:path'
 
-const IMAGES_DIR = resolve(process.cwd(), 'content', 'images')
+import { getImageParams, IMAGE_TYPES, IMAGES_DIR } from '@/lib/images'
 
-const IMAGE_TYPES: Record<string, string> = {
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.webp': 'image/webp',
-  '.gif': 'image/gif',
-  '.avif': 'image/avif',
-  '.svg': 'image/svg+xml',
+export const dynamic = 'force-static'
+export const dynamicParams = false
+
+export function generateStaticParams() {
+  return getImageParams()
 }
 
 function isWithin(root: string, target: string): boolean {
@@ -23,7 +20,7 @@ function isWithin(root: string, target: string): boolean {
   )
 }
 
-/** Serves image files from `content/images/` only. */
+/** Emits image files at build time, retaining their original public paths. */
 export async function GET(_request: Request, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params
   if (path[0] !== 'images' || path.length < 2) {

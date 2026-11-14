@@ -6,27 +6,18 @@ import { PostNewsList } from '@/components/post-news-list'
 import { ui } from '@/lib/i18n'
 import { formatDate, getCategoryCounts, getPosts, readingMinutes } from '@/lib/posts'
 import { postPath, tagPath } from '@/lib/urls'
-import { siteConfig } from '@/site.config'
-import { requireLocale } from '@/lib/locale'
+import { siteConfig, type Locale } from '@/site.config'
 import { BlogHero } from '@/ui/blog-hero'
 import { FeaturedPost } from '@/ui/featured-post'
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string }>
-}): Promise<Metadata> {
-  const { locale } = await params
-  const resolved = requireLocale(locale)
+export function getHomeMetadata(resolved: Locale): Metadata {
   return {
     title: `${siteConfig.title} ${siteConfig.suffix}`,
     description: siteConfig.description[resolved],
   }
 }
 
-export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale } = await params
-  const resolved = requireLocale(locale)
+export default async function HomePage({ locale: resolved }: { locale: Locale }) {
   const copy = ui(resolved)
 
   const posts = await getPosts(resolved)

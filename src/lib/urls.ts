@@ -1,9 +1,8 @@
 import { siteConfig, type Locale } from '@/site.config'
 
 /**
- * URLs of the default locale live at the root; every other locale gets a
- * prefix (`/en/posts/x`). The router rewrites the bare paths to the default
- * locale, so the canonical URL of a post is always `/posts/<slug>`.
+ * URLs of the default locale live at the root; English gets an `/en` prefix.
+ * Both locales have real static routes, including `/posts/<slug>` for Chinese.
  */
 export function localePath(locale: Locale, path = '/'): string {
   const clean = path.startsWith('/') ? path : `/${path}`

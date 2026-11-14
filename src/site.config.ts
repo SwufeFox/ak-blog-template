@@ -1,9 +1,14 @@
 /**
  * Site configuration.
  *
- * Everything a user of this template is expected to change lives here: identity,
- * addresses, languages and the few knobs that shape the layout.
+ * Template defaults live here. The content builder supplies site.override.json
+ * from the content repository's optional site.json.
  */
+
+import overrides from './site.override.json'
+import type { SiteOptions } from './site-options'
+
+const siteOptions: SiteOptions = overrides
 
 export const locales = ['zh', 'en'] as const
 
@@ -94,14 +99,14 @@ export interface SiteConfig {
   }
 }
 
-export const siteConfig: SiteConfig = {
+const siteDefaults: SiteConfig = {
   title: 'open-ak',
   suffix: '/ notes',
   description: {
     zh: '关于代码、工具，以及把事情做简单的练习。',
     en: 'Notes on code, tools, and the practice of making things simpler.',
   },
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://example.com',
+  url: 'https://example.com',
   author: 'your-name',
   email: 'hello@example.com',
   about: 'https://example.com/about',
@@ -122,6 +127,14 @@ export const siteConfig: SiteConfig = {
     name: 'CC BY-NC-SA 4.0',
     url: 'https://creativecommons.org/licenses/by-nc-sa/4.0/',
   },
+}
+
+export const siteConfig: SiteConfig = {
+  ...siteDefaults,
+  ...siteOptions,
+  description: { ...siteDefaults.description, ...siteOptions.description },
+  license: { ...siteDefaults.license, ...siteOptions.license },
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? siteOptions.url ?? siteDefaults.url,
 }
 
 export function isLocale(value: string): value is Locale {

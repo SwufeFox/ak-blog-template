@@ -7,18 +7,13 @@ import { ui } from '@/lib/i18n'
 import { kicker } from '@/lib/kickers'
 import { getCategoryCounts, getPostsByTerm, getTags, termExists } from '@/lib/posts'
 import { tagPath, tagsPath } from '@/lib/urls'
-import { siteConfig } from '@/site.config'
-import { requireLocale } from '@/lib/locale'
+import { siteConfig, type Locale } from '@/site.config'
 
-export async function generateStaticParams() {
-  const params: { locale: string; tag: string }[] = []
-  for (const locale of siteConfig.locales) {
-    const terms = new Set<string>()
-    for (const tag of await getTags(locale)) terms.add(tag.name)
-    for (const category of await getCategoryCounts(locale)) terms.add(category.name)
-    for (const term of terms) params.push({ locale, tag: term })
-  }
-  return params
+export async function getTermParams(locale: Locale) {
+  const terms = new Set<string>()
+  for (const tag of await getTags(locale)) terms.add(tag.name)
+  for (const category of await getCategoryCounts(locale)) terms.add(category.name)
+  return [...terms].map((tag) => ({ tag }))
 }
 
 /** Route segments arrive percent-decoded, but a hand-typed URL may not be. */
@@ -30,13 +25,7 @@ function decodeSegment(value: string): string {
   }
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string; tag: string }>
-}): Promise<Metadata> {
-  const { locale, tag } = await params
-  const resolved = requireLocale(locale)
+export async function getTermMetadata(resolved: Locale, tag: string): Promise<Metadata> {
   const term = decodeSegment(tag)
   const languages: Record<string, string> = {}
   for (const entry of siteConfig.locales) {
@@ -52,13 +41,7 @@ export async function generateMetadata({
   }
 }
 
-export default async function TermPage({
-  params,
-}: {
-  params: Promise<{ locale: string; tag: string }>
-}) {
-  const { locale, tag } = await params
-  const resolved = requireLocale(locale)
+export default async function TermPage({ locale: resolved, tag }: { locale: Locale; tag: string }) {
   const term = decodeSegment(tag)
 
   if (!(await termExists(term, resolved))) notFound()

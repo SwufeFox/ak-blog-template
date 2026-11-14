@@ -92,4 +92,4 @@ flowchart TD
 
 ## 小结
 
-写完存盘，刷新页面就能看到。发布时先跑 `npm run build`，再用 `npm start` 启动 Node 服务；代理、动态 404 和图片路由都需要运行时，不能把 `.next` 直接交给纯静态托管。
+写完后重新构建即可发布。独立内容仓库使用 `ak-blog build --content . --out out`；源码项目使用 `npm run build`。把 `out/` 上传到 Cloudflare Pages 或其他静态主机即可，线上不需要 Node 服务。`npm start` 只用于本地预览导出的文件。

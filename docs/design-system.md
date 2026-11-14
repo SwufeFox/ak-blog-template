@@ -29,7 +29,7 @@
 
 ## 使用约定
 
-1. 在 `src/app/[locale]/layout.tsx` 导入一次 `@swufefox/ak-ui-react/style.css`。组件入口可直接从服务端页面导入；Next.js 会为交互组件建立客户端边界并生成首屏 HTML。
+1. 在共享的 `src/views/layout.tsx` 导入一次 `@swufefox/ak-ui-react/style.css`，由中英文根 layout 复用。组件入口可直接从构建期服务端页面导入；静态导出会生成首屏 HTML，浏览器再 hydration。
 2. 颜色沿用 `--ak-*` 语义令牌，并通过 `--site-*` 映射给站点样式。每个 `var(--ak-*)` 保留后备值；信息、动作、成功、强调和危险颜色各自承担对应含义。结构用墨色：栏目标题竖条、分隔线、外框角标、分类方块都用 `--site-ink`；动作黄只留给状态与反馈——导航当前页、主题开关悬停、标签信号、搜索命中、阅读进度、目录当前项。404 用危险红和 `AkStripes` 的危险条纹。
 3. 标题使用 `--ak-font-display`（Oswald 等表单字体），正文与控件使用 `--ak-font-sans`，导航、标签与计数使用 `--ak-font-label`，日期、代码和对齐读数使用 `--ak-font-mono`。不把所有文本都设为等宽或全大写。
 4. 标签、编号和状态必须传达真实内容。导航与主要操作保留至少 44px 高的目标区域；窄屏重新排版，不缩小桌面布局。
@@ -62,4 +62,6 @@
 `src/ui/` 是 `@swufefox/ak-blog` 的公开组件来源：`BlogHero`、`FeaturedPost`、`PostList` 只接收 props，不读取本站设置，也不依赖 Next.js。首页、搜索、标签页通过同一套组件渲染，避免包与演示站分叉。
 
 `src/styles/components.css` 对应包的 `style.css`，使用作用域内的 `--blog-*` 映射 ak-ui 语义令牌。它不设置 `body`、通用链接或全局排版；完整博客的页面外壳与正文样式仍在 `globals.css`。外部项目先引入 ak-ui 样式，再引入本包样式，并在根节点设置 `data-ak-theme="archive"` 或 `terminal`。
+
+完整模板可由 `@swufefox/ak-blog/build` 与独立内容仓库组合构建。React 组件入口和 Node 构建入口分开导出；页面交互保留在浏览器，静态部署不引入 Node 服务。
 

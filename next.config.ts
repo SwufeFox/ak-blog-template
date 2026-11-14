@@ -1,31 +1,30 @@
 import type { NextConfig } from 'next'
+import { PHASE_DEVELOPMENT_SERVER } from 'next/constants'
 
+import { getImageParams } from './src/lib/images'
+import { getPosts } from './src/lib/posts'
 import { siteConfig } from './src/site.config'
 
-const base = siteConfig.defaultLocale
+export default async function nextConfig(phase: string): Promise<NextConfig> {
+  const development = phase === PHASE_DEVELOPMENT_SERVER
+  const pageExtensions = ['tsx', 'ts']
 
-/**
- * The default locale lives at the root of the site (`/posts/hello`), every
- * other locale gets a prefix (`/en/posts/hello`). The rewrites below send the
- * unprefixed paths to the default locale so both URLs resolve to the same
- * page; `src/proxy.ts` redirects the prefixed copy of the default locale
- * back to the root so a page is never served from two addresses.
- */
-const nextConfig: NextConfig = {
-  async rewrites() {
-    return {
-      beforeFiles: [
-        { source: '/', destination: `/${base}` },
-        { source: '/posts/:slug', destination: `/${base}/posts/:slug` },
-        { source: '/tags', destination: `/${base}/tags` },
-        { source: '/tags/:tag', destination: `/${base}/tags/:tag` },
-        { source: '/search', destination: `/${base}/search` },
-        { source: '/feed.xml', destination: `/${base}/feed.xml` },
-      ],
-      afterFiles: [],
-      fallback: [],
+  // Next rejects an empty generateStaticParams() during export. Optional
+  // collections therefore opt into their route extension only when nonempty.
+  // In development all routes stay registered so new content appears live.
+  for (const locale of siteConfig.locales) {
+    const posts = await getPosts(locale)
+    if (development || posts.length > 0) pageExtensions.push(`${locale}-post.tsx`)
+    if (development || posts.some((post) => post.tags.length > 0 || post.category)) {
+      pageExtensions.push(`${locale}-term.tsx`)
     }
-  },
-}
+  }
+  if (development || (await getImageParams()).length > 0) pageExtensions.push('images.ts')
 
-export default nextConfig
+  return {
+    output: 'export',
+    pageExtensions,
+    images: { unoptimized: true },
+    experimental: { globalNotFound: true },
+  }
+}

@@ -1,143 +1,94 @@
-# 它是怎么工作的
+# 架构
 
-一句话：文章在构建时变成 HTML 字符串，页面是普通的 React 服务端组件，浏览器只负责三件事——
-主题、搜索过滤、图表渲染。
+模板包负责构建，内容仓库负责文章和站点配置，静态主机负责分发文件。Node 不参与线上请求处理。
 
 ```mermaid
 flowchart LR
-  A[content/posts/*.md] --> B[gray-matter<br/>校验元数据]
-  B --> C[unified 管线<br/>remark → rehype]
-  C --> D[HTML + 目录]
-  D --> E[Next.js 静态生成]
-  E --> F[.next 里的页面<br/>RSS / sitemap / robots]
+  A[独立内容仓库\nposts / images / site.json] --> B[ak-blog build]
+  T[包内模板与构建依赖] --> B
+  B --> C[临时构建目录]
+  C --> D[Next 静态导出]
+  D --> E[out\nHTML / CSS / JS / 图片 / feed]
+  E --> F[Cloudflare Pages 或静态主机]
 ```
 
-## 路由
+## 包与内容的边界
 
-| 地址 | 文件 | 说明 |
-| --- | --- | --- |
-| `/`、`/en` | `src/app/[locale]/page.tsx` | 首页：站点封面、最新文章、分类与其余文章 |
-| `/posts/<slug>` | `src/app/[locale]/posts/[slug]/page.tsx` | 文章页：目录、正文、附记、上一篇 / 下一篇 |
-| `/tags` | `src/app/[locale]/tags/page.tsx` | 分类与标签总览 |
-| `/tags/<term>` | `src/app/[locale]/tags/[tag]/page.tsx` | 某个分类或标签下的文章 |
-| `/search` | `src/app/[locale]/search/page.tsx` | 搜索（`noindex`） |
-| `/feed.xml` | `src/app/[locale]/feed.xml/route.ts` | 每个语言一份 RSS |
-| `/sitemap.xml`、`/robots.txt` | `src/app/sitemap.ts`、`src/app/robots.ts` | 自动生成 |
-| `/content/images/…` | `src/app/content/[...path]/route.ts` | 正文图片，带长缓存 |
-| `/og` | `src/app/og/route.tsx` | 1200×630 社交卡片，`ImageResponse` 生成 |
-| 其他 | `src/app/[locale]/[...rest]/page.tsx` | 一律 `notFound()` |
+`src/build/index.ts` 提供 `buildBlog({ contentDir, outDir, configFile? })`，编译为独立的 `@swufefox/ak-blog/build` 入口。它不依赖调用方的 Next.js 源码，也不在构建过程中安装软件包。
 
-默认语言的页面在根路径，其他语言加前缀。这个映射由两处配合完成：
+构建流程：
 
-- `next.config.ts` 的 `beforeFiles` 重写把 `/posts/x` 送到 `/zh/posts/x`（只列了已知的路由形状，
-  所以 `/en/…` 不会被误伤）。
-- `src/proxy.ts` 把 `/zh/…` 308 回根路径，避免同一页有两个地址。
+1. 校验输入目录、输出归属和 JSON 配置，拒绝覆盖源文件或无关的非空目录。
+2. 复制包内当前模板到临时目录，移除示例内容，再放入调用方的 `posts/` 和 `images/`。
+3. 通过 `src/site.override.json` 注入经过校验的 `site.json`，链接包声明并实际安装的构建依赖。
+4. 在生产模式下执行真实的 `next build --webpack`；这也保证调用者的开发环境变量不能把草稿带进发布产物。
+5. 构建成功后发布输出目录；失败保留原有输出。清理临时构建目录。
 
-`src/lib/urls.ts` 负责生成规范地址：默认语言不带前缀，其他语言带。canonical、hreflang、
-RSS 的链接都用它。文章、归档、标签和搜索页各自在 `generateMetadata` 里声明自己的
-`alternates.canonical` 与 `languages`；首页由 layout 的 canonical 负责，新增路由时不要依赖它。
+Webpack 用于让临时构建目录可靠解析包的实际依赖位置；不依赖 Turbopack 对临时目录之外符号链接的处理。源码开发仍可以使用 Next 的开发服务器。
 
-`src/lib/social.ts` 提供同一张 1200×630 社交卡片（`/og`），layout 与文章 metadata 都把它挂到
-`openGraph.images` 和 `twitter.images`；Twitter 使用 `summary_large_image`。
+`.ak-blog-output.json` 只标识输出由本工具生成，不写入内容仓库的绝对路径。内容目录不获得应用源码或 `node_modules`。
 
-## 内容层
+## 静态路由
 
-`src/lib/posts.ts`：
+页面数据与布局在 `src/views/` 中共享，`src/app/` 只保留实际路由入口和参数枚举。
 
-- 扫描 `content/posts/*.md`（默认语言）和 `content/posts/<locale>/*.md`，目录名必须是
-  `locales` 里的语言，否则跳过。
-- `gray-matter` 解析 YAML；缺字段、日期格式、`tags` 类型、YAML 语法错误都会抛错，
-  错误信息里带文件名。
-- 结果缓存在模块级变量里，一次构建只读一遍磁盘。
-- 阅读时间按「中日韩字符数 + 英文词数」估算，所以中英混排不会偏五倍。
-- `draft: true` 的文章在 `getPosts()` 里被过滤；`getPost()` 走同一个函数，所以草稿网址是 404。
+| 地址 | 实现 |
+| --- | --- |
+| `/` | `src/app/(default)/page.tsx` → `src/views/home.tsx` |
+| `/en` | `src/app/en/page.tsx` → 同一个首页实现 |
+| `/posts/<slug>`、`/en/posts/<slug>` | 对应语言的静态参数 + `src/views/post.tsx` |
+| `/tags`、`/en/tags` | `src/views/tags.tsx` |
+| `/tags/<term>`、`/en/tags/<term>` | 静态词条参数 + `src/views/term.tsx` |
+| `/search`、`/en/search` | `src/views/search.tsx` 与客户端过滤 |
+| `/feed.xml`、`/en/feed.xml` | `force-static` GET + `src/views/feed.ts` |
+| `/content/images/…` | 构建时枚举并导出允许的图片文件 |
+| `/og.png` | 构建时生成 1200×630 PNG |
+| `/sitemap.xml`、`/robots.txt` | 构建时生成 metadata 文件 |
+| 未知地址 | 静态主机返回 `404.html` 和 HTTP 404 |
 
-## Markdown 管线
+根路径和英文前缀是真实的静态路由，不通过运行时 rewrite，也不把导出的 `/zh` 文件重命名成根页面。`src/proxy.ts` 和动态 catch-all 已移除。Cloudflare 的旧 `/zh` 跳转由 `public/_redirects` 声明。
 
-`src/lib/markdown.ts` 的 `createProcessor` 按固定顺序串起来：
+Next 16.4.6 静态导出会拒绝空的动态 `generateStaticParams()` 集合。`next.config.ts` 因此按实际内容启用公开的 `pageExtensions`：`zh-post.tsx`、`en-post.tsx`、`zh-term.tsx`、`en-term.tsx` 与 `images.ts`。对应入口形如 `page.zh-post.tsx` 或 `route.images.ts`；空集合直接不注册该动态路由，不制造假文章或假 URL。开发时全部扩展注册。
+
+默认不启用 `trailingSlash`：`/en` 对应 `out/en.html`，文章对应 `out/posts/<slug>.html`。静态主机需支持 clean URLs。全局 `404.html` 使用默认中文外壳，语言切换链接直接返回英文首页；语言路由内部的 not-found 内容仍按语言渲染。
+
+## 配置与 metadata
+
+`src/site-options.ts` 定义内容仓库 JSON 契约；`src/site.config.ts` 合并模板默认值和 JSON 覆盖。`NEXT_PUBLIC_SITE_URL` 最后覆盖 origin。浏览器可导入站点配置，但配置模块不读取文件系统。
+
+`src/views/layout.tsx` 提供共享 shell、主题 head 内容和 metadata 默认值。真正的 `<html>` / `<head>` / `<body>` 位于两套根 layout 和 `global-not-found.tsx`。默认中文文档使用 `zh-CN`，英文使用 `en`。
+
+各内容页面显式提供 canonical 和语言链接，搜索 `noindex`，404 `noindex/nofollow`。`src/lib/social.ts` 统一引用 `/og.png`。给静态图片使用扩展名，使普通文件托管也能返回正确的 `image/png` 类型。
+
+## 内容与 Markdown
+
+`src/lib/posts.ts` 在构建时读取文件、解析 YAML、校验必填字段、过滤生产草稿、排序并推导分类、标签和翻译。集合在单个构建进程内缓存；每次包构建使用新的 Next 子进程，不跨内容仓库共享文章缓存。
+
+`src/lib/markdown.ts` 保留统一管线顺序：
 
 | 步骤 | 作用 |
 | --- | --- |
-| `remarkParse` / `remarkGfm` / `remarkMath` | 解析 Markdown、表格、任务列表、`$…$` |
-| `remarkStripHtml` | 丢掉正文里的原始 HTML |
-| `remarkRenderMath` | 用 KaTeX 渲染公式，输出 HTML + MathML |
-| `remarkBlogBlocks` | 把 `data` / `stats` / `mermaid` / `sketch` / `echarts` 代码块换成自带标记的 HTML |
-| `remarkRehype` | mdast → hast，保留原始 HTML 节点 |
-| `rehypeRaw` | 把上一步生成的 HTML 解析成真正的节点 |
-| `rehypeSlug` | 给 `h2` / `h3` 生成锚点 id |
-| `rehypeMediaPaths` | 相对图片路径 → `/content/…`；本地图片补 `width` / `height`、`loading="lazy"`、`decoding="async"` |
-| `rehypePrettyCode` | Shiki 高亮，明暗双主题，行号，行内注释 |
-| `rehypeCodeFigure` | 给代码块加顶栏：文件路径、语言、源码链接、复制按钮 |
-| `rehypeAutolinkHeadings` | 标题后的 `#` 链接 |
-| `rehypeStringify` | 输出 HTML |
+| remark parse / GFM / math | Markdown、表格、任务列表与公式 |
+| 原始 HTML 清理 | 丢弃作者直接写入的 HTML |
+| 数学与自定义围栏 | KaTeX、data、stats、mermaid、sketch、echarts |
+| remark → rehype / raw | 将管线生成的 HTML 转成节点 |
+| slug 与目录 | h2/h3 锚点、TOC，排除自动链接符号 |
+| 图片 metadata | 相对 URL、尺寸、lazy/async 属性 |
+| Shiki 与代码包装 | 明暗代码主题、文件名、行号、复制按钮 |
+| HTML 序列化 | 静态文章正文 |
 
-几个容易踩的点：
+`sketch` SVG 会清理，ECharts 只接受 JSON。非法 front matter 和 ECharts JSON 在构建时报出源文件上下文。
 
-- **原始 HTML 必须先清掉。** `rehypeRaw` 会把所有 raw 节点解析成 DOM，所以正文里的 `<script>`
-  在到达它之前就被 `remarkStripHtml` 删掉了；之后出现的 raw 节点全是管线自己生成的。
-- **`rehypeStringify` 要开 `allowDangerousHtml`。** `rehypeCodeFigure` 在 `rehypeRaw` 之后才插入
-  `<figcaption>`，那是 raw 节点，字符串化时必须原样放行，否则会被转义成文本。
-- **自定义代码块走 HTML 字符串，不写 hast。** 五类块在 remark 阶段拼成字符串，交给 `rehypeRaw`
-  解析；这样 `sketch` 里的手写 SVG 也能正确进入 SVG 命名空间。
-- **目录不是插件。** 所有转换跑完后遍历一遍 hast，收集带 id 的 `h2` / `h3`，得到 `TocEntry[]`。
-  收集标题时会跳过 `rehype-autolink-headings` 追加的 `#` 锚点，所以目录文字不带尾随井号。
+## 图片与浏览器行为
 
-目录列表、代码顶栏、图表容器的 HTML 都是服务端渲染的；Mermaid / ECharts 的图形内容、阅读进度条
-和目录的当前小节高亮由浏览器补上。没有图表的文章不会下载这两个图库。
+`src/lib/images.ts` 枚举 `content/images/` 中的普通图片文件，不跟随符号链接。图片 GET 使用完整静态参数与 `force-static`，只在构建期读取文件；产物由静态主机直接分发。正文仍保留 `/content/images/…` URL，源码不会成为公开路由。
 
-## 阅读进度与目录高亮
+交互留在小型客户端组件中：主题切换、菜单、搜索、目录 scrollspy、阅读进度和复制按钮。Mermaid 与 ECharts 仅在含相应图表的文章中动态加载。搜索在构建时得到本地化摘要，在浏览器按标题 4、标签/分类 2、摘要 1 计分，并把查询同步到 `?q=`。
 
-`src/components/reading-progress.tsx` 在文章页顶部渲染一条 3px 的 sticky 进度条，按
-`scrollY / (scrollHeight - innerHeight)` 填充。
+ak-ui 的入口带有 `use client`，但组件仍在构建时产生首屏 HTML。`AkMobileMenu` 延迟到 hydration 后挂载，避免模块计数器 ID 差异。桌面目录使用 `AkHeading`，移动目录使用原生 `AkCollapsible`；关闭 JavaScript 后仍可展开目录。
 
-`src/components/post-toc.tsx` 是客户端组件，但 `<ol>` 仍由服务端渲染。滚动时用
-`requestAnimationFrame` 取视口上方 25% 之前的最后一个 `h2`/`h3`，给对应链接加
-`aria-current="location"`；到文档底部固定最后一节。这样两节之间不会出现高亮空白。
-样式把它画成左侧的动作黄竖线。点击目录项会立即更新高亮，随后交还给滚动计算。
+## 打包与验证
 
-## 浏览器运行时
+`npm pack` 的 `prepack` 编译 UI、Node 构建 API和类型声明，再从当前源文件生成 `dist/template`。构建 API 的源码与维护脚本不会复制进独立模板。`ak-blog init` 是需要自定义源码时的显式入口；普通内容仓库只使用 `build`。
 
-`src/components/post-runtime.tsx` 是文章正文里唯一的交互脚本，做三件事：
-
-1. **复制按钮**：事件委托，找到按钮所在的 `figure` 里的 `pre code`，写入剪贴板并改文案。
-2. **Mermaid**：把 `[data-ak-figure="mermaid"]` 里的 JSON 源码交给 Mermaid，渲染成 SVG 替换进去。
-3. **ECharts**：同理，把 option 交给 ECharts（SVG 渲染器）；没有写 `color` 时注入主题配色。
-
-两个库都是 `await import()` 的：文章里没有对应图表就永远不会下载。`sketch` 完全不需要脚本，
-它在构建时就是内联 SVG。
-
-## ak-ui 的客户端边界
-
-`@swufefox/ak-ui-react` 2.0 的入口带有 `"use client"`。Next.js 服务端组件可以直接导入和组合这些组件；它们仍会生成首屏 HTML，再由浏览器 hydration。样式表只需在 `src/app/[locale]/layout.tsx` 导入一次，不再需要 `src/components/ak.ts` 转发层。
-
-`AkMobileMenu` 的实例 ID 仍由模块级计数器生成。`src/components/site-nav.tsx` 用 `useSyncExternalStore` 将它延迟到 hydration 后挂载，避免服务端与浏览器的计数不同导致 ID 不匹配。
-
-目录保留服务端首屏 HTML：桌面标题使用 `AkHeading`，移动折叠使用原生 `AkCollapsible`。不再使用内部 ID 来自模块计数器的 `AkPanel` / `AkCollapseItem`；后者即使传入 `name`，内部 `aria-controls` 仍使用自动 ID，多次服务端渲染会与浏览器产生 hydration 差异。
-
-
-`src/ui/` 提供包 `@swufefox/ak-blog` 的框架无关 React 组件。`BlogHero` 组合 `AkHero`，`PostList` 组合 `AkNewsList`，`FeaturedPost` 使用语义化文章和链接。站内 `PostNewsList` 负责将文章模型转成已格式化的 props，搜索直接传入高亮内容；公开组件不依赖 `siteConfig`、文件系统或 Next.js。
-
-`npm pack` 的 `prepack` 编译 ESM 与类型声明，并从当前源文件生成完整模板快照。CLI 从快照复制独立项目；组件与模板共用源代码，构建产物不进入源码库。详见[包使用与发布](package.md)。
-
-
-## 搜索
-
-没有后端，也没有单独的索引文件：搜索页在服务端把当前语言的文章压成
-`{ slug, title, description, tags, category, date }` 交给 `SearchClient`。浏览器按每个查询词独立计分：
-标题 4 分、标签 / 分类 2 分、摘要 1 分；命中至少一个词的文章按总分排序，命中的词包进 `<mark>`。
-输入框是受控的，状态变化即时过滤，不需要提交。查询词同步到 `?q=`（`history.replaceState`），
-直接分享、刷新或从别的页面返回时都能恢复；清空输入会移除这个参数。
-
-文章多到十万字以上时可以把这套换成 `search.json` + 预建索引，接口在
-`src/components/search-client.tsx` 的 `items` 上。
-
-## 想改点什么
-
-| 想做的事 | 改哪里 |
-| --- | --- |
-| 加一种自定义代码块 | `src/lib/markdown.ts`：`BLOCK_LANGUAGES` 加语言，`remarkBlogBlocks` 里加分支 |
-| 加一个页面 | `src/app/[locale]/` 下新建 `page.tsx`，地址用 `src/lib/urls.ts` 生成 |
-| 换 Markdown 主题色 | `rehypePrettyCode` 的 `theme` 换成别的 Shiki 主题 |
-| 改正文排版 | `src/styles/globals.css` 的 `.prose` 段 |
-| 加页脚链接 | `site.config.ts` 的 `sameAs` / `email` |
-| 加 RSS 字段 | `src/app/[locale]/feed.xml/route.ts` |
+`scripts/smoke-package.mjs` 安装实际 tarball，构建独立双语和最小中文内容仓库，验证外部内容选择、站点配置、静态产物、草稿过滤、目录保护和构建失败后的输出保留。浏览器验证在普通静态文件服务器上进行，不能用 Next 服务端来掩盖导出缺陷。

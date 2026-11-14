@@ -92,15 +92,14 @@ $$
 
 ## 图片
 
-图片放在 `content/images/`，正文里写相对于 Markdown 文件的路径：
+独立内容仓库中，图片放在 `images/`，文章放在 `posts/`；源码模板里对应 `content/images/` 和 `content/posts/`。正文写相对于 Markdown 文件的路径：
 
 ```markdown
 ![示意图](../images/pipeline.svg)
 ```
 
-构建时会把相对路径改写成 `/content/images/…`，由 `src/app/content/[...path]` 提供。本地图片还会被读一次尺寸，写成 `width` / `height` 属性，并带上 `loading="lazy"` 和 `decoding="async"`，避免图片加载完成后把正文顶下去。
-路由只服务 `content/images/` 下的图片（PNG、JPEG、WebP、GIF、AVIF、SVG），不会公开文章源文件，
-并带一年长的缓存头。也可以直接写 `/content/images/…` 或外链 `https://…`。
+构建时会把相对路径改写成 `/content/images/…`，并将图片导出为静态文件。本地图片还会读取尺寸，写成 `width` / `height` 属性，并带上 `loading="lazy"` 和 `decoding="async"`，避免图片加载完成后把正文顶下去。
+只导出图片目录中的 PNG、JPEG、WebP、GIF、AVIF 和 SVG，不公开文章源文件。Cloudflare 的 `_headers` 为图片配置一年缓存；其他静态主机按平台设置缓存。也可以直接写 `/content/images/…` 或外链 `https://…`。英文翻译位于 `posts/en/` 时，相对图片路径使用 `../../images/…`。
 
 图片宽度自适应正文栏，带一圈细边线；手机上不会溢出。
 

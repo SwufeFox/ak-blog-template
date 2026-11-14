@@ -3,7 +3,7 @@ import type { Dirent } from 'node:fs'
 import { join, relative } from 'node:path'
 import matter from 'gray-matter'
 
-import { defaultLocale, isLocale, siteConfig, type Locale } from '@/site.config'
+import { defaultLocale, isLocale, siteConfig, type Locale } from '../site.config'
 
 const POSTS_DIR = join(process.cwd(), 'content', 'posts')
 
